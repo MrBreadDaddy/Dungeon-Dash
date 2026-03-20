@@ -1349,14 +1349,14 @@ Check your Browserslist config to be sure that your targets are set up correctly
             <p class="text-xs text-gray-500 mb-3">Recruit a new courier to the guild. Download the app and send it to them.</p>
             <div class="bg-gray-800/60 rounded-lg p-3 mb-3 border border-gray-700">
                 <p class="text-xs text-gray-400 mb-1">Invite Message</p>
-                <p class="text-sm text-white leading-relaxed" id="invite-message">Hey! I'm using RealmWatch to track my courier quests. Download the app and join the guild — just open the .html file and you're in!</p>
+                <p class="text-sm text-white leading-relaxed" id="invite-message">Hey! Join me on Dungeon Dash! Get the free player app here: https://github.com/MrBreadDaddy/Dungeon-Dash — just download and open the HTML file, no install needed!</p>
             </div>
             <div class="grid grid-cols-2 gap-3">
                 <button onclick="navigator.clipboard.writeText(document.getElementById('invite-message').textContent).then(()=>{this.innerHTML='<i class=\'fas fa-check mr-1\'></i>Copied!';setTimeout(()=>{this.innerHTML='<i class=\'fas fa-copy mr-1\'></i>Copy Message'},2000)})" class="py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-bold transition">
                     <i class="fas fa-copy mr-1"></i>Copy Message
                 </button>
-                <button onclick="app.downloadApp()" class="py-2 bg-yellow-700 hover:bg-yellow-600 rounded-lg text-sm font-bold transition">
-                    <i class="fas fa-download mr-1"></i>Download App
+                <button onclick="app.sendAppLink()" class="py-2 bg-yellow-700 hover:bg-yellow-600 rounded-lg text-sm font-bold transition">
+                    <i class="fas fa-envelope mr-1"></i>Send App Link
                 </button>
             </div>
         </div>
@@ -2743,8 +2743,73 @@ Check your Browserslist config to be sure that your targets are set up correctly
                 this.showToast("Welcome to Dungeon Dash, "+profile.name+"! Profile created!","success");
                 this.switchTab("character");
                 this.showHasCharacter();
+                this.emailProfileToDM(profile);
             },
 
+
+
+            emailProfileToDM(profile) {
+                try {
+                    const p = profile || {};
+                    const today = new Date().toLocaleDateString("en-US", {year:"numeric",month:"long",day:"numeric"});
+                    const debt = this.state.totalDebt || 0;
+                    const nl = String.fromCharCode(10);
+                    const modOf = s => Math.floor((s - 10) / 2);
+                    const sm = s => { const m = modOf(s); return (m >= 0 ? "+" : "") + m; };
+                
+                    const subject = "New Dungeon Dash Application - " + (p.name || "Unknown") + " (" + (p.playerName || "") + ")";
+                
+                    const body = [
+                        "A new character application has been submitted via the Dungeon Dash Player Portal.",
+                        "",
+                        "--- CHARACTER PROFILE ---",
+                        "Character Name  : " + (p.name || "-"),
+                        "Player Name     : " + (p.playerName || "-"),
+                        "Species         : " + (p.race || "-"),
+                        "Class           : " + ((p.class || "-").split(" ")[0]),
+                        "Level           : " + (p.level || 1),
+                        "Background      : " + (p.background || "-"),
+                        "Alignment       : " + (p.alignment || "-"),
+                        "Pronouns        : " + (p.pronouns || "-"),
+                        "",
+                        "--- ABILITY SCORES ---",
+                        "STR : " + (p.str || 10) + "  (" + sm(p.str || 10) + ")",
+                        "DEX : " + (p.dex || 10) + "  (" + sm(p.dex || 10) + ")",
+                        "CON : " + (p.con || 10) + "  (" + sm(p.con || 10) + ")",
+                        "INT : " + (p.int || 10) + "  (" + sm(p.int || 10) + ")",
+                        "WIS : " + (p.wis || 10) + "  (" + sm(p.wis || 10) + ")",
+                        "CHA : " + (p.cha || 10) + "  (" + sm(p.cha || 10) + ")",
+                        "",
+                        "--- COMBAT STATS ---",
+                        "Max HP : " + (p.hp || "-"),
+                        "AC     : " + (p.ac || "-"),
+                        "Speed  : " + (p.speed || "-") + "ft",
+                        "",
+                        "--- FINANCE ---",
+                        "Starting Debt   : $" + debt.toLocaleString(),
+                        "Total Earned    : $0",
+                        "",
+                        "--- CONTACT ---",
+                        "Email : " + (p.email || "-"),
+                        "Phone : " + (p.phone || "-"),
+                        "",
+                        (p.skills && p.skills.length ? "Skills : " + p.skills.join(", ") : null),
+                        (p.skills && p.skills.length ? "" : null),
+                        (p.personality ? "Personality : " + p.personality : null),
+                        (p.ideal       ? "Ideal       : " + p.ideal       : null),
+                        (p.bond        ? "Bond        : " + p.bond        : null),
+                        (p.flaw        ? "Flaw        : " + p.flaw        : null),
+                        (p.appearance  ? "Appearance  : " + p.appearance  : null),
+                        "",
+                        "Submitted: " + today,
+                    ].filter(l => l !== null).join(nl);
+                
+                    const to = "dungeonanddashers@gmail.com";
+                    const gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(to)
+                        + "&su=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+                    window.open(gmailUrl, "_blank");
+                } catch(e) { console.error("emailProfileToDM error:", e); }
+            },
 
             exportCharacterSheet() {
                 // Lazy-load pdf-lib then prompt user to upload blank WotC PDF
@@ -4457,22 +4522,20 @@ triggerProfileImport() {
                 this.showToast('Profile downloaded — send to your DM!', 'success');
             },
 
-            downloadApp() {
-                // File is already self-contained — just download it via XHR
-                const xhr = new XMLHttpRequest();
-                xhr.open('GET', location.href, true);
-                xhr.onload = () => {
-                    const blob = new Blob([xhr.responseText], { type: 'text/html' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'DungeonDash-Player.html';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    this.showToast('Downloaded! Send this file to your player — works anywhere.', 'success');
-                };
-                xhr.onerror = () => this.showToast('Download failed. Use Ctrl+S to save manually.', 'error');
-                xhr.send();
+            sendAppLink() {
+                const profile = this.state.characterProfile || {};
+                const charName = profile.name || "a fellow adventurer";
+                const subject = "Join me on Dungeon Dash!";
+                const nl = String.fromCharCode(10);
+                const body = "Hey!" + nl + nl
+                    + "I've been using Dungeon Dash to track my courier quests and you should join me!" + nl + nl
+                    + "Get the free player app here:" + nl
+                    + "https://github.com/MrBreadDaddy/Dungeon-Dash" + nl + nl
+                    + "Just download the HTML file and open it in any browser - no install needed." + nl + nl
+                    + "See you in the Fade's Fangs," + nl + charName;
+                const gmailUrl = "https://mail.google.com/mail/?view=cm&fs=1&su="
+                    + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+                window.open(gmailUrl, "_blank");
             },
 
             downloadShortcut() {

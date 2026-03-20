@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quest Generator — RealmWatch</title>
+<link rel="stylesheet" href="lib/fontawesome.min.css">
+<style>
+:root{
+  --bg0:#05050f;--bg1:#0a0a1a;--bg2:#0f0f2a;--bg3:#1a1a3a;
+  --gold:#ffd700;--gold2:#c8a800;
+  --silver:#c0c0c0;--silver2:#888;
+  --text:#e8e8f0;--text2:#a0a0c0;
+  --danger:#dc143c;--success:#22c55e;--info:#3b82f6;--warn:#f59e0b;
+  --easy:#22c55e;--medium:#f59e0b;--hard:#f97316;--legendary:#a855f7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg0);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow-x:hidden}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#2a2a5a}
+
+/* ── HEADER ── */
+header{
+  background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
+  border-bottom:1px solid rgba(255,215,0,.15);
+  padding:14px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 20px rgba(0,0,0,.5);
+}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-title{
+  font-family:'Palatino Linotype',Palatino,Georgia,serif;
+  font-size:26px;font-weight:700;
+  color:var(--gold);
+  text-shadow:0 0 20px rgba(255,215,0,.4);
+  letter-spacing:.5px;
+  line-height:1;
+}
+.header-sub{font-size:12px;color:var(--text2);margin-top:3px;letter-spacing:.5px}
+.header-nav{display:flex;align-items:center;gap:12px}
+.back-link{
+  color:var(--text2);text-decoration:none;font-size:13px;
+  padding:6px 12px;border:1px solid var(--bg3);border-radius:6px;
+  transition:all .2s;display:flex;align-items:center;gap:6px;
+}
+.back-link:hover{color:var(--gold);border-color:var(--gold);background:rgba(255,215,0,.05)}
+.quest-count-badge{
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#000;font-size:11px;font-weight:700;
+  padding:4px 10px;border-radius:20px;
+  display:flex;align-items:center;gap:5px;
+  box-shadow:0 0 10px rgba(255,215,0,.3);
+}
+
+/* ── LAYOUT ── */
+.app-grid{
+  display:grid;
+  grid-template-columns:320px 1fr 280px;
+  gap:0;
+  min-height:calc(100vh - 64px);
+}
+.col{padding:20px;overflow-y:auto;max-height:calc(100vh - 64px);}
+.col-left{background:var(--bg1);border-right:1px solid rgba(255,255,255,.05)}
+.col-center{background:var(--bg0)}
+.col-right{background:var(--bg1);border-left:1px solid rgba(255,255,255,.05)}
+
+/* ── SECTION HEADINGS ── */
+.section-title{
+  font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text2);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+
+/* ── PLATFORM CARDS ── */
+.platform-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:4px}
+.platform-card input[type=radio]{display:none}
+.platform-card label{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:10px 6px;border:1.5px solid var(--bg3);border-radius:8px;
+  background:var(--bg2);cursor:pointer;transition:all .2s;text-align:center;
+  min-height:72px;
+}
+.platform-card label:hover{border-color:var(--gold2);background:rgba(255,215,0,.05)}
+.platform-card input:checked + label{
+  border-color:var(--gold);background:rgba(255,215,0,.1);
+  box-shadow:0 0 12px rgba(255,215,0,.2);
+}
+.plat-icon{font-size:22px;line-height:1;margin-bottom:4px}
+.plat-name{font-size:11px;font-weight:600;color:var(--text);letter-spacing:.3px}
+.plat-flavor{font-size:9px;color:var(--text2);margin-top:2px;line-height:1.3}
+
+/* ── FORM CONTROLS ── */
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text2);margin-bottom:6px;display:block}
+select,input[type=text]{
+  width:100%;background:var(--bg2);border:1px solid var(--bg3);
+  color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px;
+  outline:none;transition:border-color .2s;
+  -webkit-appearance:none;appearance:none;
+}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+select:focus,input:focus{border-color:var(--gold2)}
+select option{background:var(--bg2)}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;border-radius:8px;border:none;cursor:pointer;
+  font-size:13px;font-weight:600;letter-spacing:.3px;
+  transition:all .2s;text-decoration:none;
+}
+.btn-generate{
+  width:100%;padding:14px;font-size:15px;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#000;border-radius:10px;
+  box-shadow:0 4px 20px rgba(255,215,0,.3);
+  margin-bottom:8px;
+}
+.btn-generate:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,215,0,.45)}
+.btn-generate:active{transform:translateY(0)}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid rgba(255,255,255,.08);width:100%;margin-bottom:8px}
+.btn-secondary:hover{background:#222244;border-color:var(--gold2)}
+.btn-success{background:linear-gradient(135deg,#16a34a,var(--success));color:#fff;width:100%;margin-bottom:8px;box-shadow:0 2px 12px rgba(34,197,94,.25)}
+.btn-success:hover{box-shadow:0 4px 18px rgba(34,197,94,.4);transform:translateY(-1px)}
+.btn-info{background:linear-gradient(135deg,#1d4ed8,var(--info));color:#fff;width:100%;box-shadow:0 2px 12px rgba(59,130,246,.25)}
+.btn-info:hover{box-shadow:0 4px 18px rgba(59,130,246,.4);transform:translateY(-1px)}
+.btn-batch{
+  background:linear-gradient(135deg,#6b21a8,#a855f7);color:#fff;
+  width:100%;margin-top:8px;
+  box-shadow:0 2px 12px rgba(168,85,247,.25);
+}
+.btn-batch:hover{box-shadow:0 4px 18px rgba(168,85,247,.4);transform:translateY(-1px)}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:6px}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:rgba(255,255,255,.06);margin:16px 0}
+
+/* ── QUEST PREVIEW CARD ── */
+.preview-wrap{padding:0 0 24px}
+.preview-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:400px;color:var(--text2);gap:12px;
+}
+.preview-empty .big-icon{font-size:64px;opacity:.3}
+.preview-empty p{font-size:14px}
+
+.quest-card{
+  background:var(--bg2);border:1px solid rgba(255,215,0,.2);
+  border-radius:14px;padding:0;overflow:hidden;
+  box-shadow:0 0 30px rgba(255,215,0,.08),0 4px 24px rgba(0,0,0,.4);
+  animation:cardIn .35s ease;
+  position:relative;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.quest-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+
+.qc-header{
+  padding:20px 22px 16px;
+  background:linear-gradient(135deg,var(--bg3) 0%,rgba(255,215,0,.05) 100%);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;gap:14px;align-items:flex-start;
+}
+.qc-icon{font-size:42px;line-height:1;flex-shrink:0}
+.qc-meta{flex:1}
+.qc-title{font-size:17px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:8px}
+.badge-row{display:flex;gap:6px;flex-wrap:wrap}
+.badge{
+  font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  padding:3px 9px;border-radius:20px;
+}
+.badge-easy{background:rgba(34,197,94,.15);color:var(--easy);border:1px solid rgba(34,197,94,.3)}
+.badge-medium{background:rgba(245,158,11,.15);color:var(--medium);border:1px solid rgba(245,158,11,.3)}
+.badge-hard{background:rgba(249,115,22,.15);color:var(--hard);border:1px solid rgba(249,115,22,.3)}
+.badge-legendary{background:rgba(168,85,247,.15);color:var(--legendary);border:1px solid rgba(168,85,247,.3)}
+.badge-platform{background:rgba(255,215,0,.1);color:var(--gold);border:1px solid rgba(255,215,0,.25)}
+.badge-available{background:rgba(34,197,94,.15);color:var(--easy);border:1px solid rgba(34,197,94,.3)}
+.badge-completed{background:rgba(136,136,136,.15);color:var(--silver2);border:1px solid rgba(136,136,136,.3)}
+
+.qc-body{padding:18px 22px}
+.qc-desc{color:var(--text);line-height:1.65;font-size:13px;margin-bottom:16px}
+
+.qc-complication{
+  background:rgba(245,158,11,.08);border-left:3px solid var(--warn);
+  border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:16px;
+  font-size:12px;color:var(--warn);display:flex;gap:8px;align-items:flex-start;
+}
+.qc-complication i{margin-top:1px;flex-shrink:0}
+
+.rewards-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px;
+}
+.reward-chip{
+  background:var(--bg3);border-radius:8px;padding:10px;text-align:center;
+  border:1px solid rgba(255,255,255,.06);
+}
+.reward-val{font-size:18px;font-weight:800;line-height:1}
+.reward-gold .reward-val{color:var(--gold)}
+.reward-xp .reward-val{color:var(--info)}
+.reward-tip .reward-val{font-size:13px;color:var(--success)}
+.reward-lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
+
+.qc-footer{
+  padding:14px 22px;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;gap:8px;flex-wrap:wrap;
+}
+
+/* ── BATCH LIST ── */
+.batch-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.batch-item{
+  background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;
+  padding:12px 14px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;transition:all .2s;
+}
+.batch-item:hover{border-color:var(--gold2);background:rgba(255,215,0,.04)}
+.batch-item.selected{border-color:var(--gold);box-shadow:0 0 10px rgba(255,215,0,.15)}
+.bi-icon{font-size:26px;flex-shrink:0}
+.bi-info{flex:1}
+.bi-title{font-size:13px;font-weight:600;color:var(--text)}
+.bi-meta{font-size:11px;color:var(--text2);margin-top:3px}
+.bi-rewards{text-align:right;flex-shrink:0}
+.bi-gold{font-size:15px;font-weight:700;color:var(--gold)}
+.bi-xp{font-size:10px;color:var(--info)}
+
+/* ── RIGHT PANEL ── */
+.recent-list{display:flex;flex-direction:column;gap:8px}
+.recent-card{
+  background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;
+  padding:10px 12px;transition:all .2s;
+}
+.recent-card:hover{border-color:rgba(255,215,0,.2)}
+.rc-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rc-icon{font-size:20px}
+.rc-title{font-size:12px;font-weight:600;color:var(--text);flex:1;line-height:1.3}
+.rc-badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.rc-source{font-size:10px;color:var(--text2)}
+.rc-rewards{font-size:11px;color:var(--gold);font-weight:600}
+
+.panel-link{
+  display:flex;align-items:center;gap:6px;
+  color:var(--text2);text-decoration:none;font-size:12px;
+  padding:8px 10px;border:1px solid var(--bg3);border-radius:6px;
+  margin-bottom:16px;transition:all .2s;
+}
+.panel-link:hover{color:var(--gold);border-color:var(--gold2)}
+
+.empty-state{color:var(--text2);font-size:12px;text-align:center;padding:24px 0;opacity:.7}
+
+/* ── TOAST ── */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{
+  background:var(--bg3);border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;padding:12px 16px;
+  font-size:13px;color:var(--text);
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
+  pointer-events:auto;min-width:260px;max-width:340px;
+  animation:toastIn .3s ease;
+}
+.toast.out{animation:toastOut .3s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+.toast-success{border-left:3px solid var(--success)}
+.toast-error{border-left:3px solid var(--danger)}
+.toast-info{border-left:3px solid var(--info)}
+.toast i{flex-shrink:0}
+
+/* ── GLOW PULSE for generated card ── */
+.quest-card.glow{animation:cardIn .35s ease,goldPulse 1.5s ease}
+@keyframes goldPulse{
+  0%{box-shadow:0 0 30px rgba(255,215,0,.08),0 4px 24px rgba(0,0,0,.4)}
+  50%{box-shadow:0 0 50px rgba(255,215,0,.3),0 4px 30px rgba(0,0,0,.4)}
+  100%{box-shadow:0 0 30px rgba(255,215,0,.08),0 4px 24px rgba(0,0,0,.4)}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px){
+  .app-grid{grid-template-columns:280px 1fr 260px}
+}
+@media(max-width:860px){
+  .app-grid{grid-template-columns:1fr;grid-template-rows:auto}
+  .col{max-height:none}
+  .col-left,.col-right{border:none}
+  .col-right{border-top:1px solid rgba(255,255,255,.05)}
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-left">
+    <div>
+      <div class="header-title">⚔️ Quest Generator</div>
+      <div class="header-sub">Delivery App Quests</div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <div class="quest-count-badge" id="quest-count-badge">
+      <i class="fas fa-scroll"></i>
+      <span id="quest-count-num">0</span> quests saved
+    </div>
+    <a href="nexuscore.html" class="back-link">
+      <i class="fas fa-arrow-left"></i> NexusCore
+    </a>
+  </div>
+</header>
+
+<!-- ── MAIN GRID ── -->
+<div class="app-grid">
+
+  <!-- ────── LEFT COL: CONTROLS ────── -->
+  <div class="col col-left">
+
+    <div class="section-title"><i class="fas fa-store"></i> Platform</div>
+    <div class="platform-grid" id="platform-grid">
+      <!-- injected by JS -->
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title"><i class="fas fa-sliders-h"></i> Options</div>
+
+    <div class="form-group">
+      <label class="form-label">Difficulty Override</label>
+      <select id="diff-override">
+        <option value="auto">Auto (platform default)</option>
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+        <option value="legendary">Legendary</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+        Assign to Campaign
+        <button onclick="loadCampaigns()" title="Refresh campaigns from NexusCore" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:12px;padding:0">↺ Refresh</button>
+      </label>
+      <select id="campaign-select">
+        <option value="">— None —</option>
+      </select>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="btn btn-generate" onclick="generateQuest()">
+      <i class="fas fa-bolt"></i> Generate Quest
+    </button>
+    <button class="btn btn-secondary" onclick="rerollDetails()">
+      <i class="fas fa-dice"></i> Reroll Details
+    </button>
+    <button class="btn btn-batch" onclick="generateBatch()">
+      <i class="fas fa-layer-group"></i> Generate 5 Quests
+    </button>
+
+    <div class="divider"></div>
+
+    <div class="section-title"><i class="fas fa-info-circle"></i> Platform Info</div>
+    <div id="platform-flavor" style="font-size:12px;color:var(--text2);line-height:1.6;background:var(--bg2);border-radius:8px;padding:10px 12px;border:1px solid var(--bg3)">
+      Select a platform above to see details.
+    </div>
+
+  </div>
+
+  <!-- ────── CENTER COL: PREVIEW ────── -->
+  <div class="col col-center">
+
+    <div class="section-title" style="margin-bottom:16px"><i class="fas fa-eye"></i> Quest Preview</div>
+
+    <div id="preview-area">
+      <div class="preview-empty" id="preview-empty">
+        <div class="big-icon">🗺️</div>
+        <p>Generate a quest to see the preview</p>
+        <p style="font-size:12px;opacity:.6">Pick a platform and click Generate Quest</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ────── RIGHT COL: RECENT QUESTS ────── -->
+  <div class="col col-right">
+
+    <a href="nexuscore.html" class="panel-link">
+      <i class="fas fa-external-link-alt"></i> Open NexusCore
+    </a>
+
+    <div class="section-title"><i class="fas fa-history"></i> Recent Quests</div>
+    <div id="recent-list" class="recent-list">
+      <div class="empty-state">No quests saved yet.</div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ── TOAST CONTAINER ── -->
+<div id="toast-container"></div>
+
+<script>
+/* ================================================================
+   DATA
+================================================================ */
+const PLATFORMS = [
+  {name:'DragonDash',icon:'🐉',diff:['hard','legendary'],payMult:3,desc:'Premium express delivery. High risk, high pay. Only the bravest couriers need apply.'},
+  {name:'RuneRiders',icon:'🏇',diff:['medium','hard'],payMult:2,desc:'Reliable courier service across the realm. Trusted by merchants and nobility alike.'},
+  {name:'SpellHub',icon:'⚡',diff:['medium','hard'],payMult:2.5,desc:'Specialized in arcane components and magical goods. Handle with extreme care.'},
+  {name:'MysticEats',icon:'🍖',diff:['easy','medium'],payMult:1,desc:'Hot food delivery from the realm\'s finest establishments. Tips appreciated.'},
+  {name:'QuestLink',icon:'⚔️',diff:['easy','medium','hard'],payMult:1.5,desc:'General purpose delivery and courier quests. Something for every adventurer.'},
+  {name:'GoblinGo',icon:'👺',diff:['easy'],payMult:0.6,desc:'Budget courier service. Low pay, low rep. But hey — steady work.'},
+];
+
+const VERBS = ['Deliver','Rush Deliver','Drop Off','Courier','Dispatch','Carry','Hand Deliver','Urgently Deliver'];
+
+const ITEMS = {
+  "McDonald's":    ["a Big Mac (no pickles — they will know)","a 20pc McNuggets","a large order of McFries","a Quarter Pounder with Cheese","a McRib (limited time — don't be late)","a Filet-O-Fish","a McFlurry (it's melting)","a 40pc McNuggets party pack","a Double Quarter Pounder","a large McFlurry and apple pie combo"],
+  "Burger King":   ["a Double Whopper","an Impossible Whopper","a large Onion Rings","a Whopper meal (no mayo)","a Chicken Royale","a 10pc Chicken Fries","a Double Whopper with extra cheese","a King-size value meal","a Rodeo Burger"],
+  "Taco Bell":     ["a Crunchwrap Supreme","a Nachos BellGrande","a Chalupa Box","a Mexican Pizza","a Quesarito","a Burrito Supreme (extra sour cream)","a 12-pack of Crunchy Tacos","a Baja Blast and Cheesy Gordita Crunch","a Party Pack of Doritos Locos Tacos"],
+  "Wendy's":       ["a Baconator","a large Frosty","a Dave's Triple","a Spicy Chicken Sandwich meal","a large chili","a Pretzel Bacon Pub Burger","a 4 for $4 meal (they ordered $4 worth but live across a plane)","a Frosty-ccino"],
+  "Chick-fil-A":   ["a Classic Chicken Sandwich","a Spicy Deluxe Sandwich","a large Waffle Fries","a 30-count Chicken Nuggets","a Peach Milkshake","a Chicken Biscuit breakfast order","a Grilled Chicken Club","a large lemonade and nuggets"],
+  "KFC":           ["a 12pc Original Recipe bucket","a Famous Bowl","a Zinger Burger","a large Popcorn Chicken","a KFC Family Feast","an Extra Crispy Tenders 8pc","a chicken pot pie","a Nashville Hot Chicken sandwich"],
+  "Pizza Hut":     ["a large Pepperoni Pan Pizza","a Stuffed Crust Meat Lovers","a Breadsticks and dipping sauce order","a Supreme pizza (XL)","a triple order of Stuffed Crust pizzas","a Cinnabon Mini Rolls","a Personal Pan pizza and wings combo"],
+  "Domino's":      ["a large Hand-Tossed Pepperoni Pizza","a Pasta Primavera bowl","a 2-liter of Coke and Garlic Knots","a Philly Cheese Steak pizza","a lava cake 4-pack","a MeatZZa pizza","a Chicken Bacon Ranch pizza"],
+  "Subway":        ["a Footlong Italian BMT","a Meatball Marinara footlong","a Cold Cut Combo","a Footlong Steak & Cheese","a six-inch Tuna sub (extra onions)","a breakfast footlong","a Club footlong with everything"],
+  "Popeyes":       ["a Chicken Sandwich (the real one)","a 12pc Spicy Chicken combo","a large Red Beans and Rice","a Cajun Fries and tenders meal","a family box of Popeyes chicken","a Blackened Chicken Sandwich"],
+  "Arby's":        ["a Beef 'n Cheddar","a large Curly Fries","a Reuben Sandwich","a Half Pound Beef 'n Cheddar","a Market Fresh Club","a Smokehouse Brisket sandwich"],
+  "Five Guys":     ["a Little Bacon Cheeseburger","a regular Five Guys fries","a large Cajun Fries","a customized cheeseburger with everything","a hot dog and fries combo"],
+  DEFAULT:         ["a Big Mac","a large order of fries","a bucket of chicken","a value meal","a burrito","a footlong sub","a large pizza","some nuggets","a breakfast combo","a mystery bag order"]
+};
+
+const MERCHANTS = ["McDonald's","Burger King","Taco Bell","Wendy's","Chick-fil-A","KFC","Pizza Hut","Domino's","Subway","Popeyes","Arby's","Five Guys"];
+
+const CUSTOMERS = [
+  // Gods & Deities
+  'Tiamat, Queen of Evil Dragons','Bahamut, Platinum Dragon God','Asmodeus, Lord of the Nine Hells',
+  'Orcus, Demon Prince of Undeath','Lolth, Spider Queen of the Drow','Demogorgon, Prince of Demons',
+  'Vecna, the Undying God of Secrets','Bane, the Black Hand','Tyr, the Maimed God of Justice',
+  'Mystra, Lady of Magic','Shar, Mistress of the Night','Kelemvor, Judge of the Dead',
+  'Tempus, Lord of Battles','Talos, God of Storms','Umberlee, the Bitch Queen of the Sea',
+  'Bhaal, Lord of Murder','Cyric, Prince of Lies','Selûne, the Moonmaiden',
+  'Helm, the Vigilant One','Ilmater, the Crying God','Oghma, the Binder of Knowledge',
+  'Silvanus, Oak Father of Nature','Chauntea, the Earthmother',
+  // Famous D&D Figures
+  'Elminster Aumar, the Sage of Shadowdale','Mordenkainen the Archmage',
+  'Strahd von Zarovich, Vampire Lord of Barovia','Acererak the Demilich',
+  'Halaster Blackcloak, the Mad Mage','Xanathar, the Beholder Crime Lord',
+  'Manshoon of the Zhentarim','Laeral Silverhand, Open Lord of Waterdeep',
+  'Drizzt Do\'Urden','Minsc and Boo (they share an order)',
+  'Raistlin Majere, the Black Robe Archmage','The Tarrasque (somehow)',
+  // Unknown Beings
+  'an Entity That Should Not Exist','a Being of Pure Concentrated Shadow',
+  'something from the Far Realm with too many eyes','an Unnamed God Between the Stars',
+  'the Darkness That Existed Before Light','a Mind Flayer Elder Brain ordering for the colony',
+  'a nameless voice from beneath the dungeon','an Ancient One whose true form cannot be perceived',
+  'an Entity that communicates only in prime numbers','a Being who exists in all moments simultaneously'
+];
+
+const LOCATIONS = [
+  // Divine Planes & Realms
+  'the Throne Room of the Nine Hells','Avernus, the First Layer of Hell',
+  'the Abyss, 66th Layer','Mount Celestia, Third Tier',
+  'the Astral Plane (Gate 7)','Mechanus, the Clockwork Plane',
+  'Elysium, Amoria Field','the Fugue Plane',
+  'Sigil, City of Doors','the Far Realm (coordinates unstable)',
+  'Gehenna, Khalas Layer','Limbo (good luck finding it)',
+  // Famous D&D Locations
+  'Castle Ravenloft, Barovia','Undermountain, Level 23',
+  'Waterdeep, Xanathar\'s Lair','Menzoberranzan, the Underdark',
+  'The Silver Marches, Sundabar','Candlekeep, the Great Library',
+  'The Undying Court, Aerenal','Baldur\'s Gate, Lower City',
+  'Icewind Dale, Ten-Towns','the Tomb of Annihilation'
+];
+
+const COMPLICATIONS = [
+  'They specifically requested NO pickles. They will know if there are pickles.',
+  'The delivery address exists on a different plane of existence.',
+  'A portal to the Astral Plane opened on the route — 20-minute detour.',
+  'The customer has already ordered 3 times tonight and keeps reordering.',
+  'The order is "for a friend." The friend appears to be a mind flayer.',
+  'The god is not answering their divine doorbell.',
+  'Strahd wants the order left at the drawbridge but it\'s raised.',
+  'Acererak left a death trap where the tip jar should be.',
+  'The Far Realm address keeps shifting every time you look at it.',
+  'Tiamat wants 5 separate bags — one for each head.',
+  'The entity ordered 47 value meals for "guests" that may not be real.',
+  'Orcus insists the food be delivered "lukewarm, as the undead prefer."',
+  'A rival courier from GoblinGo is also attempting this delivery.',
+  'The Nine Hells have a toll bridge. It costs a soul.',
+  '','',
+];
+const TIPS = ['No tip.','Small tip: +$1.','Decent tip: +$2.','Good tipper! +$5 extra.','Generous customer: +$10 extra if delivered fast.','VIP customer: mystery bonus on completion.'];
+
+const USD_RANGES = {easy:[10,30],medium:[30,75],hard:[75,150],legendary:[150,500]};
+const REP_RANGES = {easy:[5,15],medium:[15,30],hard:[30,60],legendary:[60,150]};
+const HOURS = {easy:[1,4],medium:[2,8],hard:[4,12],legendary:[6,24]};
+
+const DIFF_ICONS = {easy:'🟢',medium:'🟡',hard:'🟠',legendary:'🟣'};
+const PLATFORM_QUEST_ICONS = {DragonDash:'🐉',RuneRiders:'🏇',SpellHub:'⚡',MysticEats:'🍖',QuestLink:'📦',GoblinGo:'👺'};
+
+const NC_KEYS = {quests:'nc_quests',campaigns:'nc_campaigns',activity:'nc_activity'};
+
+/* ================================================================
+   UTILS
+================================================================ */
+function uid(){return 'qg_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7)}
+function rnd(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function rndInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+function clamp(v,min,max){return Math.min(Math.max(v,min),max)}
+
+function loadLS(key){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return []}}
+function saveLS(key,val){localStorage.setItem(key,JSON.stringify(val))}
+
+/* ================================================================
+   STATE
+================================================================ */
+let currentPlatform = PLATFORMS[4]; // QuestLink default
+let currentQuest = null;
+let currentBatch = null;
+
+/* ================================================================
+   INIT
+================================================================ */
+// Re-sync whenever this tab becomes active (catches changes made in NexusCore)
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){
+    loadCampaigns();
+    refreshRecentPanel();
+    refreshQuestCount();
+  }
+});
+// Also sync if NexusCore saves while both tabs are open
+window.addEventListener('storage',e=>{
+  if(e.key===NC_KEYS.campaigns) loadCampaigns();
+  if(e.key===NC_KEYS.quests){ refreshRecentPanel(); refreshQuestCount(); }
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  buildPlatformGrid();
+  loadCampaigns();
+  refreshRecentPanel();
+  refreshQuestCount();
+  selectPlatform(4);
+});
+
+/* ================================================================
+   PLATFORM GRID
+================================================================ */
+function buildPlatformGrid(){
+  const grid = document.getElementById('platform-grid');
+  grid.innerHTML = PLATFORMS.map((p,i)=>`
+    <div class="platform-card">
+      <input type="radio" name="platform" id="plat${i}" value="${i}" ${i===4?'checked':''}>
+      <label for="plat${i}" onclick="selectPlatform(${i})">
+        <div class="plat-icon">${p.icon}</div>
+        <div class="plat-name">${p.name}</div>
+      </label>
+    </div>
+  `).join('');
+}
+
+function selectPlatform(idx){
+  currentPlatform = PLATFORMS[idx];
+  document.getElementById('platform-flavor').textContent = currentPlatform.icon+' '+currentPlatform.name+' — '+currentPlatform.desc;
+  // highlight radio
+  document.querySelectorAll('input[name=platform]').forEach((r,i)=>{r.checked=(i===idx)});
+}
+
+/* ================================================================
+   CAMPAIGN LOADER
+================================================================ */
+function loadCampaigns(){
+  const sel = document.getElementById('campaign-select');
+  const campaigns = loadLS(NC_KEYS.campaigns);
+  sel.innerHTML = '<option value="">— None —</option>';
+  campaigns.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id||c.name;
+    opt.textContent = (c.icon||'📖')+' '+(c.name||'Unnamed Campaign');
+    sel.appendChild(opt);
+  });
+}
+
+/* ================================================================
+   GENERATION CORE
+================================================================ */
+function buildQuestData(platform, diffOverride){
+  const diff = diffOverride && diffOverride!=='auto'
+    ? diffOverride
+    : rnd(platform.diff);
+
+  const gr = USD_RANGES[diff];
+  const xr = REP_RANGES[diff];
+  const hr = HOURS[diff];
+
+  const baseUsd = rndInt(gr[0],gr[1]);
+  const usdReward = Math.round(baseUsd * platform.payMult);
+  const repReward = rndInt(xr[0],xr[1]);
+  const hours = rndInt(hr[0],hr[1]);
+
+  const merchant = rnd(MERCHANTS);
+  const itemList = ITEMS[merchant] || ITEMS.DEFAULT;
+  const item = rnd(itemList);
+  const customer = rnd(CUSTOMERS);
+  const location = rnd(LOCATIONS);
+  const complication = rnd(COMPLICATIONS);
+  const tip = rnd(TIPS);
+  const verb = rnd(VERBS);
+
+  const shortLoc = location.replace(/^the /i,'').replace(/^(a |an )/i,'');
+  const title = `${verb} ${item} to ${customer.split(',')[0]}`;
+  const description = `${platform.name} order: ${merchant} needs someone to deliver ${item} to ${customer} at ${location}. ${complication ? complication+' ' : ''}`
+    +`Time limit: ${hours} hour${hours!==1?'s':''}. Pay: $${usdReward}. Rep: +${repReward}. Tip: ${tip}`;
+
+  const notes = `Platform: ${platform.name} | Restaurant: ${merchant} | Customer: ${customer} | Location: ${location}`;
+
+  return {
+    id: uid(),
+    title,
+    icon: PLATFORM_QUEST_ICONS[platform.name]||'📦',
+    difficulty: diff,
+    status: 'available',
+    type: 'delivery',
+    miles: 2,
+    campaignId: document.getElementById('campaign-select').value||'',
+    dollars: usdReward,
+    rep: repReward,
+    itemRewards: '',
+    notes,
+    description,
+    source: 'QuestGen',
+    // extra fields for display
+    _platform: platform.name,
+    _platformIcon: platform.icon,
+    _merchant: merchant,
+    _customer: customer,
+    _location: location,
+    _item: item,
+    _complication: complication,
+    _tip: tip,
+    _hours: hours,
+  };
+}
+
+/* ================================================================
+   GENERATE SINGLE
+================================================================ */
+function generateQuest(){
+  const diffOverride = document.getElementById('diff-override').value;
+  currentQuest = buildQuestData(currentPlatform, diffOverride);
+  currentBatch = null;
+  renderPreview(currentQuest);
+  toast('Quest generated!','success','fa-bolt');
+}
+
+/* ================================================================
+   REROLL
+================================================================ */
+function rerollDetails(){
+  if(!currentQuest){toast('Generate a quest first.','error','fa-exclamation-triangle');return}
+  const diffOverride = document.getElementById('diff-override').value;
+  currentQuest = buildQuestData(currentPlatform, diffOverride);
+  renderPreview(currentQuest);
+  toast('Details rerolled!','info','fa-dice');
+}
+
+/* ================================================================
+   BATCH GENERATE
+================================================================ */
+function generateBatch(){
+  const diffOverride = document.getElementById('diff-override').value;
+  currentBatch = Array.from({length:5},()=>buildQuestData(currentPlatform,diffOverride));
+  currentQuest = null;
+  renderBatch(currentBatch);
+  toast('5 quests generated! Click one to select.','info','fa-layer-group');
+}
+
+/* ================================================================
+   RENDER PREVIEW (single)
+================================================================ */
+function renderPreview(q){
+  const area = document.getElementById('preview-area');
+  area.innerHTML = `
+    <div class="quest-card glow" id="main-quest-card">
+      ${questCardInner(q)}
+      <div class="qc-footer">
+        <button class="btn btn-success" onclick="saveQuest()">
+          <i class="fas fa-check"></i> Save to NexusCore
+        </button>
+        <button class="btn btn-secondary" onclick="generateQuest()">
+          <i class="fas fa-redo"></i> Generate Another
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/* ================================================================
+   RENDER BATCH
+================================================================ */
+function renderBatch(quests){
+  const area = document.getElementById('preview-area');
+  area.innerHTML = `
+    <div class="section-title" style="margin-bottom:12px"><i class="fas fa-layer-group"></i> Select a Quest</div>
+    <div class="batch-list" id="batch-list">
+      ${quests.map((q,i)=>`
+        <div class="batch-item" id="bi${i}" onclick="selectBatchItem(${i})">
+          <div class="bi-icon">${q.icon}</div>
+          <div class="bi-info">
+            <div class="bi-title">${q.title}</div>
+            <div class="bi-meta">${q._platformIcon} ${q._platform} · ${q.difficulty} · Deliver to ${q._location}</div>
+          </div>
+          <div class="bi-rewards">
+            <div class="bi-gold">$${q.dollars}</div>
+            <div class="bi-xp">${q.rep} Rep</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:12px" id="batch-detail-area"></div>
+  `;
+}
+
+function selectBatchItem(idx){
+  document.querySelectorAll('.batch-item').forEach((el,i)=>{
+    el.classList.toggle('selected',i===idx);
+  });
+  currentQuest = currentBatch[idx];
+  const area = document.getElementById('batch-detail-area');
+  area.innerHTML = `
+    <div class="quest-card" style="margin-top:8px">
+      ${questCardInner(currentQuest)}
+      <div class="qc-footer">
+        <button class="btn btn-success" onclick="saveQuest()">
+          <i class="fas fa-check"></i> Save to NexusCore
+        </button>
+        <button class="btn btn-secondary" onclick="generateBatch()">
+          <i class="fas fa-redo"></i> Regenerate 5
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/* ================================================================
+   QUEST CARD INNER HTML
+================================================================ */
+function questCardInner(q){
+  const diffClass = q.difficulty.toLowerCase();
+  const comp = q._complication||'';
+  return `
+    <div class="qc-header">
+      <div class="qc-icon">${q.icon}</div>
+      <div class="qc-meta">
+        <div class="qc-title">${q.title}</div>
+        <div class="badge-row">
+          <span class="badge badge-${diffClass}">${DIFF_ICONS[q.difficulty]} ${q.difficulty}</span>
+          <span class="badge badge-platform">${q._platformIcon||''} ${q._platform||''}</span>
+          <span class="badge badge-available">Available</span>
+        </div>
+      </div>
+    </div>
+    <div class="qc-body">
+      <div class="qc-desc">${q.description}</div>
+      ${comp?`<div class="qc-complication"><i class="fas fa-exclamation-triangle"></i><span><strong>Complication:</strong> ${comp}</span></div>`:''}
+      <div class="rewards-row">
+        <div class="reward-chip reward-gold">
+          <div class="reward-val">$${q.dollars}</div>
+          <div class="reward-lbl">Pay ($)</div>
+        </div>
+        <div class="reward-chip reward-xp">
+          <div class="reward-val">${q.rep}</div>
+          <div class="reward-lbl">Rep Gain</div>
+        </div>
+        <div class="reward-chip reward-tip">
+          <div class="reward-val">${tipShort(q._tip)}</div>
+          <div class="reward-lbl">Tip</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:8px">
+        <i class="fas fa-store" style="margin-right:4px"></i>${q._merchant}
+        &nbsp;→&nbsp;
+        <i class="fas fa-map-marker-alt" style="margin-right:4px"></i>${q._location}
+        &nbsp;·&nbsp;
+        <i class="fas fa-clock" style="margin-right:4px"></i>${q._hours}h
+      </div>
+    </div>
+  `;
+}
+
+function tipShort(tip){
+  if(!tip||tip==='No tip.') return '—';
+  const m = tip.match(/\+\$[\d]+/);
+  if(m) return m[0];
+  if(tip.includes('mystery')) return '✨';
+  return '✨';
+}
+
+/* ================================================================
+   SAVE TO NEXUSCORE
+================================================================ */
+function saveQuest(){
+  if(!currentQuest){toast('No quest to save.','error','fa-exclamation-triangle');return}
+
+  const quests = loadLS(NC_KEYS.quests);
+  // Strip private fields before saving
+  const toSave = {
+    id: currentQuest.id,
+    title: currentQuest.title,
+    icon: currentQuest.icon,
+    difficulty: currentQuest.difficulty,
+    status: currentQuest.status,
+    campaignId: currentQuest.campaignId,
+    dollars: currentQuest.dollars,
+    rep: currentQuest.rep,
+    type: currentQuest.type||'delivery',
+    miles: currentQuest.miles||2,
+    itemRewards: currentQuest.itemRewards,
+    notes: currentQuest.notes,
+    description: currentQuest.description,
+    source: currentQuest.source,
+    createdAt: new Date().toISOString(),
+  };
+  quests.unshift(toSave);
+  saveLS(NC_KEYS.quests, quests);
+
+  // Log activity
+  const activity = loadLS(NC_KEYS.activity);
+  activity.unshift({icon:'⚔️',msg:'Generated quest: '+toSave.title,time:new Date().toISOString()});
+  if(activity.length>50) activity.length=50;
+  saveLS(NC_KEYS.activity, activity);
+
+  toast('Quest saved to NexusCore!','success','fa-check-circle');
+  refreshRecentPanel();
+  refreshQuestCount();
+}
+
+/* ================================================================
+   RIGHT PANEL
+================================================================ */
+function refreshRecentPanel(){
+  const quests = loadLS(NC_KEYS.quests).slice(0,10);
+  const el = document.getElementById('recent-list');
+  if(!quests.length){el.innerHTML='<div class="empty-state">No quests saved yet.</div>';return}
+  el.innerHTML = quests.map(q=>{
+    const diffClass = (q.difficulty||'easy').toLowerCase();
+    return `
+      <div class="recent-card">
+        <div class="rc-header">
+          <div class="rc-icon">${q.icon||'📦'}</div>
+          <div class="rc-title">${q.title||'Unnamed Quest'}</div>
+        </div>
+        <div class="rc-badges">
+          <span class="badge badge-${diffClass}" style="font-size:9px">${q.difficulty||'?'}</span>
+          <span class="badge badge-${(q.status||'available')}" style="font-size:9px">${q.status||'available'}</span>
+          ${q.source==='QuestGen'?`<span class="badge" style="font-size:9px;background:rgba(168,85,247,.12);color:#c084fc;border:1px solid rgba(168,85,247,.25)">QuestGen</span>`:''}
+        </div>
+        <div class="rc-rewards">
+          <i class="fas fa-dollar-sign" style="margin-right:4px;font-size:10px"></i>$${q.dollars||0} &nbsp;
+          <span style="color:var(--info)"><i class="fas fa-star" style="font-size:10px"></i> ${q.rep||0} Rep</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function refreshQuestCount(){
+  const quests = loadLS(NC_KEYS.quests);
+  document.getElementById('quest-count-num').textContent = quests.length;
+}
+
+/* ================================================================
+   TOAST
+================================================================ */
+function toast(msg, type='info', icon='fa-info-circle'){
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<i class="fas ${icon}" style="color:var(--${type==='success'?'success':type==='error'?'danger':'info'})"></i><span>${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(()=>{
+    el.classList.add('out');
+    el.addEventListener('animationend',()=>el.remove());
+  },3200);
+}
+</script>
+</body>
+</html>

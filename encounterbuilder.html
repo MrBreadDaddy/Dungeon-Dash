@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encounter Builder — RealmWatch</title>
+<link rel="stylesheet" href="lib/fontawesome.min.css">
+<style>
+:root{
+  --bg0:#05050f;--bg1:#0a0a1a;--bg2:#0f0f2a;--bg3:#1a1a3a;
+  --gold:#ffd700;--gold2:#c8a800;
+  --silver:#c0c0c0;--silver2:#888;
+  --text:#e8e8f0;--text2:#a0a0c0;
+  --danger:#dc143c;--success:#22c55e;--info:#3b82f6;--warn:#f59e0b;
+  --trivial:#555;--easy:#22c55e;--medium:#f59e0b;--hard:#f97316;--deadly:#dc143c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg0);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:14px;
+  display:flex;
+  flex-direction:column;
+}
+
+/* HEADER */
+.app-header{
+  background:var(--bg1);
+  border-bottom:1px solid var(--bg3);
+  padding:0 20px;
+  height:52px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-shrink:0;
+  z-index:10;
+}
+.app-header .logo{
+  font-size:1.2rem;
+  font-weight:700;
+  color:var(--gold);
+  letter-spacing:1px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.app-header .logo i{color:var(--danger);}
+.app-header nav{display:flex;gap:4px;margin-left:auto;}
+.nav-link{
+  color:var(--text2);
+  text-decoration:none;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:0.8rem;
+  transition:all .15s;
+}
+.nav-link:hover{background:var(--bg3);color:var(--text);}
+.nav-link.active{background:var(--bg3);color:var(--gold);}
+
+/* MAIN LAYOUT */
+.main-layout{
+  display:flex;
+  flex:1;
+  overflow:hidden;
+  gap:0;
+}
+
+/* LEFT PANEL */
+.left-panel{
+  width:400px;
+  min-width:340px;
+  max-width:440px;
+  background:var(--bg1);
+  border-right:1px solid var(--bg3);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.left-panel .panel-header{
+  padding:14px 16px 10px;
+  border-bottom:1px solid var(--bg3);
+  flex-shrink:0;
+}
+.left-panel .panel-header h2{
+  font-size:0.95rem;
+  font-weight:600;
+  color:var(--gold);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
+}
+.search-box{
+  position:relative;
+  margin-bottom:8px;
+}
+.search-box i{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--silver2);
+  font-size:0.8rem;
+}
+.search-box input{
+  width:100%;
+  background:var(--bg2);
+  border:1px solid var(--bg3);
+  border-radius:6px;
+  color:var(--text);
+  padding:7px 10px 7px 30px;
+  font-size:0.85rem;
+  outline:none;
+  transition:border-color .15s;
+}
+.search-box input:focus{border-color:var(--gold2);}
+
+.filter-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+  margin-bottom:6px;
+}
+.filter-btn{
+  background:var(--bg2);
+  border:1px solid var(--bg3);
+  color:var(--text2);
+  border-radius:4px;
+  padding:3px 8px;
+  font-size:0.72rem;
+  cursor:pointer;
+  transition:all .15s;
+  white-space:nowrap;
+}
+.filter-btn:hover{border-color:var(--gold2);color:var(--text);}
+.filter-btn.active{background:var(--bg3);border-color:var(--gold);color:var(--gold);}
+
+.cr-filter-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+
+/* MONSTER LIST */
+.monster-list-wrap{
+  flex:1;
+  overflow-y:auto;
+  padding:6px 8px;
+}
+.monster-list-wrap::-webkit-scrollbar{width:5px;}
+.monster-list-wrap::-webkit-scrollbar-track{background:var(--bg1);}
+.monster-list-wrap::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+
+.monster-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 8px;
+  border-radius:6px;
+  border:1px solid transparent;
+  margin-bottom:2px;
+  cursor:pointer;
+  transition:all .15s;
+  background:var(--bg2);
+}
+.monster-row:hover{
+  border-color:var(--gold2);
+  background:var(--bg3);
+}
+.monster-row:hover .add-btn{opacity:1;}
+.monster-name{
+  font-size:0.82rem;
+  font-weight:500;
+  color:var(--text);
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.type-chip{
+  font-size:0.65rem;
+  padding:2px 6px;
+  border-radius:10px;
+  font-weight:600;
+  text-transform:capitalize;
+  flex-shrink:0;
+}
+.cr-badge{
+  font-size:0.7rem;
+  font-weight:700;
+  color:var(--gold);
+  background:rgba(255,215,0,.1);
+  border:1px solid rgba(255,215,0,.3);
+  padding:2px 6px;
+  border-radius:4px;
+  flex-shrink:0;
+  min-width:36px;
+  text-align:center;
+}
+.hp-text{
+  font-size:0.7rem;
+  color:var(--silver2);
+  flex-shrink:0;
+}
+.xp-text{
+  font-size:0.7rem;
+  color:var(--text2);
+  flex-shrink:0;
+}
+.add-btn{
+  opacity:0;
+  background:var(--gold);
+  color:var(--bg0);
+  border:none;
+  border-radius:4px;
+  padding:3px 8px;
+  font-size:0.7rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .15s;
+  flex-shrink:0;
+}
+.add-btn:hover{background:var(--gold2);}
+.monster-row:hover .add-btn{opacity:1;}
+
+/* RIGHT PANEL */
+.right-panel{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--bg0);
+}
+.right-scroll{
+  flex:1;
+  overflow-y:auto;
+  padding:16px 20px;
+}
+.right-scroll::-webkit-scrollbar{width:5px;}
+.right-scroll::-webkit-scrollbar-track{background:var(--bg0);}
+.right-scroll::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+
+/* CARDS */
+.card{
+  background:var(--bg1);
+  border:1px solid var(--bg3);
+  border-radius:10px;
+  padding:16px;
+  margin-bottom:14px;
+}
+.card-title{
+  font-size:0.9rem;
+  font-weight:600;
+  color:var(--gold);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:14px;
+}
+
+/* FORM ELEMENTS */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:10px;
+}
+.form-grid-3{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:10px;
+  margin-bottom:10px;
+}
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.form-group.full{grid-column:1/-1;}
+label{
+  font-size:0.75rem;
+  color:var(--text2);
+  font-weight:500;
+}
+input[type=text],
+input[type=number],
+select,
+textarea{
+  background:var(--bg2);
+  border:1px solid var(--bg3);
+  border-radius:6px;
+  color:var(--text);
+  padding:7px 10px;
+  font-size:0.85rem;
+  outline:none;
+  transition:border-color .15s;
+  font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--gold2);}
+select option{background:var(--bg2);}
+textarea{resize:vertical;min-height:80px;}
+
+/* ROSTER TABLE */
+.roster-table-wrap{
+  overflow-x:auto;
+  border-radius:6px;
+  border:1px solid var(--bg3);
+  margin-bottom:10px;
+}
+.roster-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:580px;
+}
+.roster-table th{
+  background:var(--bg2);
+  color:var(--text2);
+  font-size:0.72rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  padding:8px 10px;
+  text-align:left;
+  border-bottom:1px solid var(--bg3);
+}
+.roster-table td{
+  padding:6px 8px;
+  border-bottom:1px solid rgba(26,26,58,.6);
+  vertical-align:middle;
+}
+.roster-table tr:last-child td{border-bottom:none;}
+.roster-table tr:hover td{background:rgba(255,215,0,.02);}
+.roster-table input[type=number]{
+  width:60px;
+  padding:4px 6px;
+  font-size:0.82rem;
+  text-align:center;
+}
+.roster-table input[type=text]{
+  padding:4px 7px;
+  font-size:0.82rem;
+}
+.remove-btn{
+  background:rgba(220,20,60,.15);
+  border:1px solid rgba(220,20,60,.3);
+  color:var(--danger);
+  border-radius:4px;
+  padding:4px 8px;
+  cursor:pointer;
+  font-size:0.75rem;
+  transition:all .15s;
+}
+.remove-btn:hover{background:rgba(220,20,60,.3);}
+.total-xp-cell{
+  font-weight:600;
+  color:var(--gold);
+  font-size:0.82rem;
+}
+
+/* CUSTOM ADD ROW */
+.custom-add-row{
+  display:flex;
+  gap:8px;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  padding:10px 0 4px;
+  border-top:1px solid var(--bg3);
+  margin-top:4px;
+}
+.custom-add-row .form-group{flex:1;min-width:90px;}
+.custom-add-row .form-group label{font-size:0.7rem;}
+
+/* XP CALCULATOR */
+.xp-calculator{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.xp-left,.xp-right{display:flex;flex-direction:column;gap:10px;}
+
+.diff-badge{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  padding:14px 10px;
+  text-align:center;
+  flex-direction:column;
+  gap:4px;
+  border:2px solid;
+  transition:all .3s;
+}
+.diff-badge .diff-label{
+  font-size:1.4rem;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+.diff-badge .diff-xp{
+  font-size:0.8rem;
+  opacity:.8;
+}
+.diff-trivial{color:var(--trivial);border-color:var(--trivial);background:rgba(85,85,85,.1);}
+.diff-easy{color:var(--easy);border-color:var(--easy);background:rgba(34,197,94,.1);}
+.diff-medium{color:var(--medium);border-color:var(--medium);background:rgba(245,158,11,.1);}
+.diff-hard{color:var(--hard);border-color:var(--hard);background:rgba(249,115,22,.1);}
+.diff-deadly{color:var(--deadly);border-color:var(--deadly);background:rgba(220,20,60,.1);}
+
+.xp-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:6px 10px;
+  background:var(--bg2);
+  border-radius:6px;
+  font-size:0.8rem;
+}
+.xp-row .xp-label{color:var(--text2);}
+.xp-row .xp-val{font-weight:600;color:var(--text);}
+.xp-threshold-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+}
+.threshold-item{
+  padding:5px 8px;
+  border-radius:5px;
+  font-size:0.75rem;
+  display:flex;
+  justify-content:space-between;
+  border:1px solid;
+}
+.threshold-item.t-easy{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.06);}
+.threshold-item.t-medium{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.06);}
+.threshold-item.t-hard{border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.06);}
+.threshold-item.t-deadly{border-color:rgba(220,20,60,.3);background:rgba(220,20,60,.06);}
+.threshold-item span:first-child{color:var(--text2);}
+.threshold-item span:last-child{font-weight:600;}
+.t-easy span:last-child{color:var(--easy);}
+.t-medium span:last-child{color:var(--medium);}
+.t-hard span:last-child{color:var(--hard);}
+.t-deadly span:last-child{color:var(--deadly);}
+
+.party-row{
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+}
+.party-row .form-group{flex:1;}
+
+/* ACTION BUTTONS */
+.action-bar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:4px;
+}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:9px 18px;
+  border-radius:7px;
+  font-size:0.85rem;
+  font-weight:600;
+  cursor:pointer;
+  border:none;
+  transition:all .15s;
+}
+.btn-gold{
+  background:var(--gold);
+  color:var(--bg0);
+}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px);}
+.btn-ghost{
+  background:transparent;
+  border:1px solid var(--bg3);
+  color:var(--text2);
+}
+.btn-ghost:hover{border-color:var(--silver2);color:var(--text);background:var(--bg2);}
+.btn-danger{
+  background:rgba(220,20,60,.15);
+  border:1px solid rgba(220,20,60,.3);
+  color:var(--danger);
+}
+.btn-danger:hover{background:rgba(220,20,60,.25);}
+.btn-info{
+  background:rgba(59,130,246,.15);
+  border:1px solid rgba(59,130,246,.3);
+  color:var(--info);
+}
+.btn-info:hover{background:rgba(59,130,246,.25);}
+
+/* RECENT ENCOUNTERS */
+.recent-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(220px,1fr));
+  gap:10px;
+}
+.recent-card{
+  background:var(--bg2);
+  border:1px solid var(--bg3);
+  border-radius:8px;
+  padding:12px;
+  cursor:pointer;
+  transition:all .15s;
+}
+.recent-card:hover{border-color:var(--gold2);background:var(--bg3);}
+.recent-card .rc-name{
+  font-size:0.85rem;
+  font-weight:600;
+  color:var(--text);
+  margin-bottom:4px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.recent-card .rc-meta{
+  font-size:0.72rem;
+  color:var(--text2);
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:6px;
+}
+.recent-card .rc-diff{
+  font-size:0.7rem;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:4px;
+  display:inline-block;
+}
+
+/* COLLAPSIBLE */
+.collapsible-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+  user-select:none;
+}
+.collapsible-header i.toggle-icon{
+  font-size:0.8rem;
+  color:var(--text2);
+  transition:transform .2s;
+}
+.collapsed .toggle-icon{transform:rotate(-90deg);}
+.collapsible-body{
+  overflow:hidden;
+  transition:max-height .25s ease;
+  max-height:2000px;
+}
+.collapsible-body.closed{max-height:0;}
+
+/* EMPTY STATE */
+.empty-state{
+  text-align:center;
+  padding:30px 20px;
+  color:var(--silver2);
+  font-size:0.82rem;
+}
+.empty-state i{font-size:2rem;display:block;margin-bottom:8px;opacity:.4;}
+
+/* TOAST */
+#toast-container{
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.toast{
+  background:var(--bg2);
+  border:1px solid var(--bg3);
+  border-radius:8px;
+  padding:10px 16px;
+  font-size:0.82rem;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:220px;
+  max-width:360px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  animation:slideIn .2s ease;
+  transition:opacity .3s;
+}
+.toast.success{border-color:var(--success);}
+.toast.error{border-color:var(--danger);}
+.toast.info{border-color:var(--info);}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* MONSTER COUNT BADGE */
+.count-badge{
+  background:var(--bg3);
+  color:var(--text2);
+  font-size:0.65rem;
+  padding:1px 6px;
+  border-radius:10px;
+  margin-left:4px;
+}
+
+/* SCROLLBAR global */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+
+/* Responsive tweaks */
+@media(max-width:900px){
+  .left-panel{width:300px;min-width:280px;}
+  .xp-calculator{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="logo">
+    <i class="fas fa-skull"></i>
+    ENCOUNTER BUILDER
+  </div>
+  <nav>
+    <a href="nexuscore.html" class="nav-link"><i class="fas fa-home"></i> NexusCore</a>
+    <a href="index.html" class="nav-link"><i class="fas fa-map"></i> RealmWatch</a>
+    <a href="encounterbuilder.html" class="nav-link active"><i class="fas fa-dragon"></i> Encounters</a>
+  </nav>
+</header>
+
+<div class="main-layout">
+
+  <!-- LEFT PANEL: Monster Library -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <h2><i class="fas fa-book-skull"></i> Monster Library <span class="count-badge" id="lib-count">0</span></h2>
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="monster-search" placeholder="Search monsters…" oninput="filterMonsters()">
+      </div>
+      <div class="filter-row" id="type-filters">
+        <button class="filter-btn active" data-type="all" onclick="setTypeFilter('all',this)">All</button>
+        <button class="filter-btn" data-type="humanoid" onclick="setTypeFilter('humanoid',this)">Humanoid</button>
+        <button class="filter-btn" data-type="beast" onclick="setTypeFilter('beast',this)">Beast</button>
+        <button class="filter-btn" data-type="undead" onclick="setTypeFilter('undead',this)">Undead</button>
+        <button class="filter-btn" data-type="dragon" onclick="setTypeFilter('dragon',this)">Dragon</button>
+        <button class="filter-btn" data-type="fiend" onclick="setTypeFilter('fiend',this)">Fiend</button>
+        <button class="filter-btn" data-type="aberration" onclick="setTypeFilter('aberration',this)">Aberration</button>
+        <button class="filter-btn" data-type="construct" onclick="setTypeFilter('construct',this)">Construct</button>
+        <button class="filter-btn" data-type="elemental" onclick="setTypeFilter('elemental',this)">Elemental</button>
+        <button class="filter-btn" data-type="monstrosity" onclick="setTypeFilter('monstrosity',this)">Monstrosity</button>
+        <button class="filter-btn" data-type="plant" onclick="setTypeFilter('plant',this)">Plant</button>
+        <button class="filter-btn" data-type="giant" onclick="setTypeFilter('giant',this)">Giant</button>
+        <button class="filter-btn" data-type="fey" onclick="setTypeFilter('fey',this)">Fey</button>
+        <button class="filter-btn" data-type="ooze" onclick="setTypeFilter('ooze',this)">Ooze</button>
+        <button class="filter-btn" data-type="celestial" onclick="setTypeFilter('celestial',this)">Celestial</button>
+      </div>
+      <div class="cr-filter-row" id="cr-filters">
+        <button class="filter-btn active" data-cr="all" onclick="setCrFilter('all',this)">All CR</button>
+        <button class="filter-btn" data-cr="low" onclick="setCrFilter('low',this)">CR 0–¼</button>
+        <button class="filter-btn" data-cr="mid" onclick="setCrFilter('mid',this)">CR ½–1</button>
+        <button class="filter-btn" data-cr="mod" onclick="setCrFilter('mod',this)">CR 2–4</button>
+        <button class="filter-btn" data-cr="high" onclick="setCrFilter('high',this)">CR 5–9</button>
+        <button class="filter-btn" data-cr="epic" onclick="setCrFilter('epic',this)">CR 10+</button>
+      </div>
+    </div>
+    <div class="monster-list-wrap" id="monster-list"></div>
+  </div>
+
+  <!-- RIGHT PANEL: Encounter Builder -->
+  <div class="right-panel">
+    <div class="right-scroll">
+
+      <!-- Encounter Details -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-scroll"></i> Encounter Details</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Encounter Name</label>
+            <input type="text" id="enc-name" placeholder="e.g. Goblin Ambush" oninput="markDirty()">
+          </div>
+          <div class="form-group">
+            <label>Environment</label>
+            <select id="enc-env" onchange="markDirty()">
+              <option value="">— Select —</option>
+              <option value="Forest">Forest</option>
+              <option value="Dungeon">Dungeon</option>
+              <option value="City">City</option>
+              <option value="Tavern">Tavern</option>
+              <option value="Road">Road</option>
+              <option value="Underground">Underground</option>
+              <option value="Swamp">Swamp</option>
+              <option value="Mountain">Mountain</option>
+              <option value="Coastal">Coastal</option>
+              <option value="Desert">Desert</option>
+              <option value="Plains">Plains</option>
+              <option value="Arctic">Arctic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Campaign</label>
+            <select id="enc-campaign" onchange="onCampaignChange()">
+              <option value="">— None —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Linked Quest</label>
+            <select id="enc-quest" onchange="markDirty()">
+              <option value="">— None —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monster Roster -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-users"></i> Monster Roster <span class="count-badge" id="roster-count">0</span></div>
+        <div class="roster-table-wrap">
+          <table class="roster-table" id="roster-table">
+            <thead>
+              <tr>
+                <th>Monster</th>
+                <th>CR</th>
+                <th style="width:70px">Count</th>
+                <th style="width:70px">HP</th>
+                <th style="width:70px">XP ea.</th>
+                <th style="width:80px">Total XP</th>
+                <th style="width:40px"></th>
+              </tr>
+            </thead>
+            <tbody id="roster-body"></tbody>
+          </table>
+        </div>
+        <div id="roster-empty" class="empty-state" style="display:none">
+          <i class="fas fa-ghost"></i>
+          No monsters added yet. Click <strong>+ Add</strong> in the library to begin.
+        </div>
+
+        <!-- Custom Monster Add -->
+        <div class="custom-add-row">
+          <div class="form-group">
+            <label>Custom Name</label>
+            <input type="text" id="custom-name" placeholder="Monster name">
+          </div>
+          <div class="form-group">
+            <label>CR</label>
+            <input type="text" id="custom-cr" placeholder="1/4" style="width:60px">
+          </div>
+          <div class="form-group">
+            <label>HP</label>
+            <input type="number" id="custom-hp" min="1" value="10" style="width:60px">
+          </div>
+          <div class="form-group">
+            <label>XP</label>
+            <input type="number" id="custom-xp" min="0" value="50" style="width:70px">
+          </div>
+          <button class="btn btn-ghost" onclick="addCustomMonster()" style="height:32px;padding:4px 14px;font-size:.8rem;flex-shrink:0;">
+            <i class="fas fa-plus"></i> Add Custom
+          </button>
+        </div>
+      </div>
+
+      <!-- XP Calculator -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-calculator"></i> XP Calculator &amp; Difficulty</div>
+        <div class="xp-calculator">
+          <div class="xp-left">
+            <div id="diff-badge" class="diff-badge diff-trivial">
+              <div class="diff-label">—</div>
+              <div class="diff-xp">Add monsters to calculate</div>
+            </div>
+            <div class="xp-row">
+              <span class="xp-label">Raw XP (sum)</span>
+              <span class="xp-val" id="raw-xp">0</span>
+            </div>
+            <div class="xp-row">
+              <span class="xp-label">Encounter Multiplier</span>
+              <span class="xp-val" id="enc-multiplier">×1</span>
+            </div>
+            <div class="xp-row" style="background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);">
+              <span class="xp-label" style="color:var(--gold);font-weight:600;">Adjusted XP</span>
+              <span class="xp-val" style="color:var(--gold);font-size:.95rem;" id="adj-xp">0</span>
+            </div>
+          </div>
+          <div class="xp-right">
+            <div class="party-row">
+              <div class="form-group">
+                <label>Party Size</label>
+                <input type="number" id="party-size" min="1" max="8" value="4" style="width:60px" oninput="calcDifficulty()">
+              </div>
+              <div class="form-group">
+                <label>Party Level</label>
+                <select id="party-level" onchange="calcDifficulty()">
+                  <option value="1">Level 1</option><option value="2">Level 2</option>
+                  <option value="3">Level 3</option><option value="4">Level 4</option>
+                  <option value="5" selected>Level 5</option><option value="6">Level 6</option>
+                  <option value="7">Level 7</option><option value="8">Level 8</option>
+                  <option value="9">Level 9</option><option value="10">Level 10</option>
+                  <option value="11">Level 11</option><option value="12">Level 12</option>
+                  <option value="13">Level 13</option><option value="14">Level 14</option>
+                  <option value="15">Level 15</option><option value="16">Level 16</option>
+                  <option value="17">Level 17</option><option value="18">Level 18</option>
+                  <option value="19">Level 19</option><option value="20">Level 20</option>
+                </select>
+              </div>
+            </div>
+            <div class="xp-threshold-grid" id="threshold-grid">
+              <div class="threshold-item t-easy"><span>Easy</span><span id="t-easy">0</span></div>
+              <div class="threshold-item t-medium"><span>Medium</span><span id="t-medium">0</span></div>
+              <div class="threshold-item t-hard"><span>Hard</span><span id="t-hard">0</span></div>
+              <div class="threshold-item t-deadly"><span>Deadly</span><span id="t-deadly">0</span></div>
+            </div>
+            <div class="xp-row" style="font-size:.72rem;">
+              <span class="xp-label">Monster count</span>
+              <span class="xp-val" id="monster-count-val">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card">
+        <div class="card-title"><i class="fas fa-pen-nib"></i> DM Notes</div>
+        <div class="form-group">
+          <label>Tactics, loot, triggers, special conditions…</label>
+          <textarea id="enc-notes" placeholder="e.g. Goblins ambush from the treeline. Boss flees at 25% HP. Loot: 10gp, shortsword +1." oninput="markDirty()"></textarea>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="card" style="padding:12px 16px;">
+        <div class="action-bar">
+          <button class="btn btn-gold" onclick="saveEncounter()">
+            <i class="fas fa-floppy-disk"></i> Save to NexusCore
+          </button>
+          <button class="btn btn-info" onclick="randomEncounter()">
+            <i class="fas fa-dice-d20"></i> Random Encounter
+          </button>
+          <button class="btn btn-ghost" onclick="newEncounter()">
+            <i class="fas fa-plus"></i> New Encounter
+          </button>
+          <button class="btn btn-danger" onclick="clearRoster()">
+            <i class="fas fa-trash"></i> Clear Roster
+          </button>
+        </div>
+      </div>
+
+      <!-- Recent Encounters -->
+      <div class="card" id="recent-card">
+        <div class="collapsible-header" onclick="toggleRecent()">
+          <div class="card-title" style="margin-bottom:0;"><i class="fas fa-history"></i> Recent Encounters</div>
+          <i class="fas fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="collapsible-body" id="recent-body">
+          <div style="height:12px;"></div>
+          <div class="recent-grid" id="recent-grid"></div>
+          <div id="recent-empty" class="empty-state" style="display:none;">
+            <i class="fas fa-scroll"></i>
+            No saved encounters yet.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right-scroll -->
+  </div><!-- /right-panel -->
+</div><!-- /main-layout -->
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+// =====================================================================
+//  DATA & CONSTANTS
+// =====================================================================
+const NC_KEYS = {
+  encounters: 'nc_encounters',
+  campaigns:  'nc_campaigns',
+  quests:     'nc_quests',
+  activity:   'nc_activity'
+};
+
+const XP_THRESHOLDS = {
+  1:[25,50,75,100],   2:[50,100,150,200],   3:[75,150,225,400],
+  4:[125,250,375,500],5:[250,500,750,1100], 6:[300,600,900,1400],
+  7:[350,750,1100,1700],8:[450,900,1400,2100],9:[550,1100,1600,2400],
+  10:[600,1200,1900,2800],11:[800,1600,2400,3600],12:[1000,2000,3000,4500],
+  13:[1100,2200,3400,5100],14:[1250,2500,3800,5700],15:[1400,2800,4300,6400],
+  16:[1600,3200,4800,7200],17:[2000,3900,5900,8800],18:[2100,4200,6300,9500],
+  19:[2400,4900,7300,10900],20:[2800,5700,8500,12700]
+};
+
+const ENV_MONSTERS = {
+  Forest:['Wolf','Dire Wolf','Goblin','Orc','Bandit','Giant Spider','Owlbear','Satyr','Hobgoblin','Gnoll'],
+  Dungeon:['Skeleton','Zombie','Ghoul','Shadow','Specter','Goblin','Kobold','Mimic','Gelatinous Cube','Troll'],
+  City:['Thug','Bandit','Spy','Cultist','Wererat','Guard','Gnoll','Bandit Captain','Cult Fanatic','Berserker'],
+  Tavern:['Bandit','Thug','Cultist','Spy','Guard','Berserker'],
+  Road:['Bandit','Bandit Captain','Thug','Hobgoblin','Gnoll','Worg','Berserker','Scout'],
+  Underground:['Kobold','Goblin','Bugbear','Orc','Mind Flayer','Giant Spider','Nothic','Phase Spider'],
+  Swamp:['Lizardfolk','Crocodile','Giant Frog','Shambling Mound','Sea Hag','Troll',"Will-o'-Wisp"],
+  Mountain:['Goblin','Kobold','Orc','Manticore','Yeti','Berserker','Worg','Bandit'],
+  Coastal:['Merfolk','Sahuagin','Sea Hag','Merrow','Reef Shark'],
+  Desert:['Bandit','Thug','Scout','Orc','Gnoll','Cultist'],
+  Plains:['Bandit','Wolf','Gnoll','Orc','Hobgoblin','Berserker','Worg'],
+  Arctic:['Yeti','Berserker','Scout','Wolf','Orc']
+};
+
+const MONSTERS = [
+  {name:'Commoner',cr:'0',hp:4,xp:10,type:'humanoid',size:'Medium'},
+  {name:'Rat',cr:'0',hp:1,xp:10,type:'beast',size:'Tiny'},
+  {name:'Raven',cr:'0',hp:1,xp:10,type:'beast',size:'Tiny'},
+  {name:'Cat',cr:'0',hp:2,xp:10,type:'beast',size:'Tiny'},
+  {name:'Frog',cr:'0',hp:1,xp:0,type:'beast',size:'Tiny'},
+  {name:'Jackal',cr:'0',hp:3,xp:10,type:'beast',size:'Small'},
+  {name:'Lemure',cr:'0',hp:13,xp:10,type:'fiend',size:'Medium'},
+  {name:'Myconid Sprout',cr:'0',hp:7,xp:10,type:'plant',size:'Small'},
+  {name:'Kraken Tentacle',cr:'0',hp:20,xp:0,type:'monstrosity',size:'Huge'},
+  {name:'Bandit',cr:'1/8',hp:11,xp:25,type:'humanoid',size:'Medium'},
+  {name:'Cultist',cr:'1/8',hp:9,xp:25,type:'humanoid',size:'Medium'},
+  {name:'Guard',cr:'1/8',hp:11,xp:25,type:'humanoid',size:'Medium'},
+  {name:'Kobold',cr:'1/8',hp:5,xp:25,type:'humanoid',size:'Small'},
+  {name:'Mastiff',cr:'1/8',hp:5,xp:25,type:'beast',size:'Medium'},
+  {name:'Merfolk',cr:'1/8',hp:11,xp:25,type:'humanoid',size:'Medium'},
+  {name:'Poisonous Snake',cr:'1/8',hp:2,xp:25,type:'beast',size:'Tiny'},
+  {name:'Stirge',cr:'1/8',hp:2,xp:25,type:'beast',size:'Tiny'},
+  {name:'Tribal Warrior',cr:'1/8',hp:11,xp:25,type:'humanoid',size:'Medium'},
+  {name:'Twig Blight',cr:'1/8',hp:4,xp:25,type:'plant',size:'Small'},
+  {name:'Flying Snake',cr:'1/8',hp:5,xp:25,type:'beast',size:'Tiny'},
+  {name:'Giant Rat',cr:'1/8',hp:7,xp:25,type:'beast',size:'Small'},
+  {name:'Acolyte',cr:'1/4',hp:9,xp:50,type:'humanoid',size:'Medium'},
+  {name:'Ape',cr:'1/4',hp:19,xp:50,type:'beast',size:'Medium'},
+  {name:'Blink Dog',cr:'1/4',hp:22,xp:50,type:'fey',size:'Medium'},
+  {name:'Boar',cr:'1/4',hp:11,xp:50,type:'beast',size:'Medium'},
+  {name:'Draft Horse',cr:'1/4',hp:19,xp:50,type:'beast',size:'Large'},
+  {name:'Elk',cr:'1/4',hp:13,xp:50,type:'beast',size:'Large'},
+  {name:'Giant Bat',cr:'1/4',hp:22,xp:50,type:'beast',size:'Large'},
+  {name:'Giant Centipede',cr:'1/4',hp:4,xp:50,type:'beast',size:'Small'},
+  {name:'Giant Frog',cr:'1/4',hp:18,xp:50,type:'beast',size:'Medium'},
+  {name:'Giant Lizard',cr:'1/4',hp:19,xp:50,type:'beast',size:'Large'},
+  {name:'Giant Owl',cr:'1/4',hp:19,xp:50,type:'beast',size:'Large'},
+  {name:'Giant Poisonous Snake',cr:'1/4',hp:11,xp:50,type:'beast',size:'Medium'},
+  {name:'Giant Wolf Spider',cr:'1/4',hp:11,xp:50,type:'beast',size:'Medium'},
+  {name:'Goblin',cr:'1/4',hp:7,xp:50,type:'humanoid',size:'Small'},
+  {name:'Kenku',cr:'1/4',hp:13,xp:50,type:'humanoid',size:'Medium'},
+  {name:'Kuo-Toa',cr:'1/4',hp:18,xp:50,type:'humanoid',size:'Medium'},
+  {name:'Mud Mephit',cr:'1/4',hp:27,xp:50,type:'elemental',size:'Small'},
+  {name:'Needle Blight',cr:'1/4',hp:11,xp:50,type:'plant',size:'Medium'},
+  {name:'Panther',cr:'1/4',hp:13,xp:50,type:'beast',size:'Medium'},
+  {name:'Pixie',cr:'1/4',hp:1,xp:50,type:'fey',size:'Tiny'},
+  {name:'Pseudodragon',cr:'1/4',hp:7,xp:50,type:'dragon',size:'Tiny'},
+  {name:'Pteranodon',cr:'1/4',hp:13,xp:50,type:'beast',size:'Large'},
+  {name:'Riding Horse',cr:'1/4',hp:13,xp:50,type:'beast',size:'Large'},
+  {name:'Skeleton',cr:'1/4',hp:13,xp:50,type:'undead',size:'Medium'},
+  {name:'Swarm of Bats',cr:'1/4',hp:22,xp:50,type:'beast',size:'Medium'},
+  {name:'Swarm of Rats',cr:'1/4',hp:24,xp:50,type:'beast',size:'Medium'},
+  {name:'Wolf',cr:'1/4',hp:11,xp:50,type:'beast',size:'Medium'},
+  {name:'Zombie',cr:'1/4',hp:22,xp:50,type:'undead',size:'Medium'},
+  {name:'Black Bear',cr:'1/2',hp:19,xp:100,type:'beast',size:'Medium'},
+  {name:'Crocodile',cr:'1/2',hp:19,xp:100,type:'beast',size:'Large'},
+  {name:'Gnoll',cr:'1/2',hp:22,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Hobgoblin',cr:'1/2',hp:11,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Jackalwere',cr:'1/2',hp:18,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Lizardfolk',cr:'1/2',hp:22,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Magma Mephit',cr:'1/2',hp:22,xp:100,type:'elemental',size:'Small'},
+  {name:'Orc',cr:'1/2',hp:15,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Reef Shark',cr:'1/2',hp:22,xp:100,type:'beast',size:'Medium'},
+  {name:'Rust Monster',cr:'1/2',hp:27,xp:100,type:'monstrosity',size:'Medium'},
+  {name:'Sahuagin',cr:'1/2',hp:22,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Satyr',cr:'1/2',hp:31,xp:100,type:'fey',size:'Medium'},
+  {name:'Scout',cr:'1/2',hp:16,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Shadow',cr:'1/2',hp:16,xp:100,type:'undead',size:'Medium'},
+  {name:'Swarm of Insects',cr:'1/2',hp:22,xp:100,type:'beast',size:'Medium'},
+  {name:'Thug',cr:'1/2',hp:32,xp:100,type:'humanoid',size:'Medium'},
+  {name:'Vine Blight',cr:'1/2',hp:26,xp:100,type:'plant',size:'Medium'},
+  {name:'Warhorse',cr:'1/2',hp:19,xp:100,type:'beast',size:'Large'},
+  {name:'Worg',cr:'1/2',hp:26,xp:100,type:'monstrosity',size:'Large'},
+  {name:'Bugbear',cr:'1',hp:27,xp:200,type:'humanoid',size:'Medium'},
+  {name:'Dire Wolf',cr:'1',hp:37,xp:200,type:'beast',size:'Large'},
+  {name:'Ghoul',cr:'1',hp:22,xp:200,type:'undead',size:'Medium'},
+  {name:'Giant Spider',cr:'1',hp:26,xp:200,type:'beast',size:'Large'},
+  {name:'Giant Toad',cr:'1',hp:39,xp:200,type:'beast',size:'Large'},
+  {name:'Goblin Boss',cr:'1',hp:21,xp:200,type:'humanoid',size:'Small'},
+  {name:'Harpy',cr:'1',hp:38,xp:200,type:'monstrosity',size:'Medium'},
+  {name:'Imp',cr:'1',hp:10,xp:200,type:'fiend',size:'Tiny'},
+  {name:'Kobold Dragonshield',cr:'1',hp:44,xp:200,type:'humanoid',size:'Small'},
+  {name:'Nixie',cr:'1',hp:0,xp:200,type:'fey',size:'Small'},
+  {name:'Specter',cr:'1',hp:22,xp:200,type:'undead',size:'Medium'},
+  {name:'Spy',cr:'1',hp:27,xp:200,type:'humanoid',size:'Medium'},
+  {name:'Yuan-ti Pureblood',cr:'1',hp:40,xp:200,type:'humanoid',size:'Medium'},
+  {name:'Bandit Captain',cr:'2',hp:65,xp:450,type:'humanoid',size:'Medium'},
+  {name:'Berserker',cr:'2',hp:67,xp:450,type:'humanoid',size:'Medium'},
+  {name:'Cult Fanatic',cr:'2',hp:33,xp:450,type:'humanoid',size:'Medium'},
+  {name:'Gelatinous Cube',cr:'2',hp:84,xp:450,type:'ooze',size:'Large'},
+  {name:'Ghast',cr:'2',hp:36,xp:450,type:'undead',size:'Medium'},
+  {name:'Gnoll Pack Lord',cr:'2',hp:49,xp:450,type:'humanoid',size:'Medium'},
+  {name:'Green Dragon Wyrmling',cr:'2',hp:38,xp:450,type:'dragon',size:'Medium'},
+  {name:'Merrow',cr:'2',hp:45,xp:450,type:'monstrosity',size:'Large'},
+  {name:'Mimic',cr:'2',hp:58,xp:450,type:'monstrosity',size:'Medium'},
+  {name:'Nothic',cr:'2',hp:45,xp:450,type:'aberration',size:'Medium'},
+  {name:'Ochre Jelly',cr:'2',hp:45,xp:450,type:'ooze',size:'Large'},
+  {name:'Ogre',cr:'2',hp:59,xp:450,type:'giant',size:'Large'},
+  {name:'Ogre Zombie',cr:'2',hp:85,xp:450,type:'undead',size:'Large'},
+  {name:'Orc Eye of Gruumsh',cr:'2',hp:45,xp:450,type:'humanoid',size:'Medium'},
+  {name:'Quaggoth',cr:'2',hp:45,xp:450,type:'humanoid',size:'Medium'},
+  {name:'Rug of Smothering',cr:'2',hp:33,xp:450,type:'construct',size:'Large'},
+  {name:'Sea Hag',cr:'2',hp:52,xp:450,type:'fey',size:'Medium'},
+  {name:'Wererat',cr:'2',hp:33,xp:450,type:'humanoid',size:'Medium'},
+  {name:'Wereraven',cr:'2',hp:31,xp:450,type:'humanoid',size:'Medium'},
+  {name:"Will-o'-Wisp",cr:'2',hp:22,xp:450,type:'undead',size:'Tiny'},
+  {name:'Bugbear Chief',cr:'3',hp:65,xp:700,type:'humanoid',size:'Medium'},
+  {name:'Manticore',cr:'3',hp:68,xp:700,type:'monstrosity',size:'Large'},
+  {name:'Minotaur',cr:'3',hp:114,xp:700,type:'monstrosity',size:'Large'},
+  {name:'Mummy',cr:'3',hp:58,xp:700,type:'undead',size:'Medium'},
+  {name:'Owlbear',cr:'3',hp:59,xp:700,type:'monstrosity',size:'Large'},
+  {name:'Phase Spider',cr:'3',hp:32,xp:700,type:'monstrosity',size:'Large'},
+  {name:'Werewolf',cr:'3',hp:58,xp:700,type:'humanoid',size:'Medium'},
+  {name:'Wight',cr:'3',hp:45,xp:700,type:'undead',size:'Medium'},
+  {name:'Yeti',cr:'3',hp:51,xp:700,type:'monstrosity',size:'Large'},
+  {name:'Black Pudding',cr:'4',hp:85,xp:1100,type:'ooze',size:'Large'},
+  {name:'Ghost',cr:'4',hp:45,xp:1100,type:'undead',size:'Medium'},
+  {name:'Orc War Chief',cr:'4',hp:93,xp:1100,type:'humanoid',size:'Medium'},
+  {name:'Succubus/Incubus',cr:'4',hp:66,xp:1100,type:'fiend',size:'Medium'},
+  {name:'Wereboar',cr:'4',hp:78,xp:1100,type:'humanoid',size:'Medium'},
+  {name:'Weretiger',cr:'4',hp:120,xp:1100,type:'humanoid',size:'Medium'},
+  {name:'Invisible Stalker',cr:'6',hp:104,xp:2300,type:'elemental',size:'Medium'},
+  {name:'Medusa',cr:'6',hp:127,xp:2300,type:'monstrosity',size:'Medium'},
+  {name:'Night Hag',cr:'5',hp:112,xp:1800,type:'fiend',size:'Medium'},
+  {name:'Roper',cr:'5',hp:93,xp:1800,type:'monstrosity',size:'Large'},
+  {name:'Salamander',cr:'5',hp:90,xp:1800,type:'elemental',size:'Large'},
+  {name:'Shambling Mound',cr:'5',hp:136,xp:1800,type:'plant',size:'Large'},
+  {name:'Troll',cr:'5',hp:84,xp:1800,type:'giant',size:'Large'},
+  {name:'Unicorn',cr:'5',hp:67,xp:1800,type:'celestial',size:'Large'},
+  {name:'Vampire Spawn',cr:'5',hp:82,xp:1800,type:'undead',size:'Medium'},
+  {name:'Water Elemental',cr:'5',hp:114,xp:1800,type:'elemental',size:'Large'},
+  {name:'Werebear',cr:'5',hp:135,xp:1800,type:'humanoid',size:'Medium'},
+  {name:'Wraith',cr:'5',hp:67,xp:1800,type:'undead',size:'Medium'},
+  {name:'Shield Guardian',cr:'7',hp:142,xp:2900,type:'construct',size:'Large'},
+  {name:'Mind Flayer',cr:'7',hp:71,xp:2900,type:'aberration',size:'Medium'},
+  {name:'Young Dragon',cr:'7',hp:178,xp:2900,type:'dragon',size:'Large'},
+  {name:'Hydra',cr:'8',hp:172,xp:3900,type:'monstrosity',size:'Huge'},
+  {name:'Golem (Stone)',cr:'10',hp:178,xp:5900,type:'construct',size:'Large'},
+  {name:'Beholder',cr:'13',hp:180,xp:10000,type:'aberration',size:'Large'},
+  {name:'Vampire',cr:'13',hp:144,xp:10000,type:'undead',size:'Medium'},
+  {name:'Adult Dragon',cr:'15',hp:243,xp:13000,type:'dragon',size:'Huge'},
+  {name:'Golem (Iron)',cr:'16',hp:210,xp:15000,type:'construct',size:'Large'},
+  {name:'Lich',cr:'21',hp:135,xp:33000,type:'undead',size:'Medium'},
+  {name:'Ancient Dragon',cr:'24',hp:367,xp:62000,type:'dragon',size:'Gargantuan'},
+];
+
+// =====================================================================
+//  STATE
+// =====================================================================
+let activeTypeFilter = 'all';
+let activeCrFilter   = 'all';
+let roster = [];        // {id, name, cr, count, hp, xp}
+let isDirty = false;
+let editingId = null;
+
+// =====================================================================
+//  UTILS
+// =====================================================================
+function uid(){return 'eb_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+function crToNum(cr){
+  if(cr==='0')   return 0;
+  if(cr==='1/8') return 0.125;
+  if(cr==='1/4') return 0.25;
+  if(cr==='1/2') return 0.5;
+  return parseFloat(cr)||0;
+}
+
+function crInRange(cr, range){
+  const n = crToNum(cr);
+  if(range==='all')  return true;
+  if(range==='low')  return n<=0.25;
+  if(range==='mid')  return n>=0.5 && n<=1;
+  if(range==='mod')  return n>=2 && n<=4;
+  if(range==='high') return n>=5 && n<=9;
+  if(range==='epic') return n>=10;
+  return true;
+}
+
+function xpMultiplier(totalCount){
+  if(totalCount<=1)  return 1;
+  if(totalCount===2) return 1.5;
+  if(totalCount<=6)  return 2;
+  if(totalCount<=10) return 2.5;
+  if(totalCount<=14) return 3;
+  return 4;
+}
+
+function typeColor(type){
+  const map={
+    humanoid:'#3b82f6',beast:'#22c55e',undead:'#a855f7',dragon:'#ef4444',
+    fiend:'#dc2626',aberration:'#8b5cf6',construct:'#6b7280',elemental:'#f97316',
+    monstrosity:'#b45309',plant:'#16a34a',giant:'#d97706',fey:'#ec4899',
+    ooze:'#65a30d',celestial:'#fbbf24',
+  };
+  return map[type]||'#888';
+}
+
+function fmtXp(n){return n>=1000?Math.round(n).toLocaleString():Math.round(n).toString();}
+
+function ncLoad(key){
+  try{return JSON.parse(localStorage.getItem(key)||'[]');}catch(e){return [];}
+}
+function ncSave(key,data){
+  try{localStorage.setItem(key,JSON.stringify(data));}catch(e){}
+}
+function ncLogActivity(icon,msg){
+  const acts=ncLoad(NC_KEYS.activity);
+  acts.unshift({icon,msg,time:new Date().toISOString()});
+  ncSave(NC_KEYS.activity, acts.slice(0,100));
+}
+
+// =====================================================================
+//  TOAST
+// =====================================================================
+function toast(msg, type='info', duration=3000){
+  const c=document.getElementById('toast-container');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  const icons={success:'fa-check-circle',error:'fa-times-circle',info:'fa-info-circle',warn:'fa-exclamation-triangle'};
+  el.innerHTML=`<i class="fas ${icons[type]||icons.info}" style="color:var(--${type==='warn'?'warn':type==='success'?'success':type==='error'?'danger':'info'})"></i>${msg}`;
+  c.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),350);},duration);
+}
+
+// =====================================================================
+//  MONSTER LIBRARY
+// =====================================================================
+function setTypeFilter(type, btn){
+  activeTypeFilter=type;
+  document.querySelectorAll('[data-type]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterMonsters();
+}
+function setCrFilter(cr, btn){
+  activeCrFilter=cr;
+  document.querySelectorAll('[data-cr]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterMonsters();
+}
+
+function filterMonsters(){
+  const q=(document.getElementById('monster-search').value||'').toLowerCase();
+  const filtered=MONSTERS.filter(m=>{
+    const matchText=m.name.toLowerCase().includes(q)||m.type.toLowerCase().includes(q);
+    const matchType=activeTypeFilter==='all'||m.type===activeTypeFilter;
+    const matchCr=crInRange(m.cr, activeCrFilter);
+    return matchText&&matchType&&matchCr;
+  });
+  renderMonsterList(filtered);
+  document.getElementById('lib-count').textContent=filtered.length;
+}
+
+function renderMonsterList(list){
+  const el=document.getElementById('monster-list');
+  if(!list.length){
+    el.innerHTML=`<div class="empty-state"><i class="fas fa-search"></i>No monsters match your filters.</div>`;
+    return;
+  }
+  el.innerHTML=list.map(m=>{
+    const col=typeColor(m.type);
+    return `<div class="monster-row" onclick="addMonsterToRoster(${MONSTERS.indexOf(m)})">
+      <span class="monster-name">${m.name}</span>
+      <span class="type-chip" style="background:${col}22;color:${col};border:1px solid ${col}44">${m.type}</span>
+      <span class="cr-badge">CR ${m.cr}</span>
+      <span class="hp-text">${m.hp}hp</span>
+      <span class="xp-text">${m.xp}xp</span>
+      <button class="add-btn" onclick="event.stopPropagation();addMonsterToRoster(${MONSTERS.indexOf(m)})">
+        <i class="fas fa-plus"></i>
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// =====================================================================
+//  ROSTER
+// =====================================================================
+function addMonsterToRoster(idx){
+  const m=MONSTERS[idx];
+  if(!m) return;
+  const existing=roster.find(r=>r.name===m.name&&r.cr===m.cr);
+  if(existing){
+    existing.count++;
+  } else {
+    roster.push({id:uid(),name:m.name,cr:m.cr,count:1,hp:m.hp,xp:m.xp});
+  }
+  markDirty();
+  renderRoster();
+  calcDifficulty();
+  toast(`Added <strong>${m.name}</strong> to roster`, 'success', 1800);
+}
+
+function removeFromRoster(id){
+  roster=roster.filter(r=>r.id!==id);
+  markDirty();
+  renderRoster();
+  calcDifficulty();
+}
+
+function addCustomMonster(){
+  const name=(document.getElementById('custom-name').value||'').trim();
+  if(!name){toast('Enter a monster name first.','warn');return;}
+  const cr=document.getElementById('custom-cr').value||'0';
+  const hp=parseInt(document.getElementById('custom-hp').value)||0;
+  const xp=parseInt(document.getElementById('custom-xp').value)||0;
+  roster.push({id:uid(),name,cr,count:1,hp,xp});
+  document.getElementById('custom-name').value='';
+  markDirty();
+  renderRoster();
+  calcDifficulty();
+  toast(`Added custom monster <strong>${name}</strong>`,'success',1800);
+}
+
+function clearRoster(){
+  if(roster.length===0){toast('Roster is already empty.','info');return;}
+  if(!confirm('Clear all monsters from the roster?')) return;
+  roster=[];
+  markDirty();
+  renderRoster();
+  calcDifficulty();
+}
+
+function renderRoster(){
+  const tbody=document.getElementById('roster-body');
+  const empty=document.getElementById('roster-empty');
+  const countBadge=document.getElementById('roster-count');
+  const totalMonsters=roster.reduce((s,r)=>s+r.count,0);
+  countBadge.textContent=totalMonsters;
+
+  if(!roster.length){
+    tbody.innerHTML='';
+    empty.style.display='';
+    return;
+  }
+  empty.style.display='none';
+  tbody.innerHTML=roster.map(r=>{
+    const rowXp=r.count*(r.xp||0);
+    return `<tr data-id="${r.id}">
+      <td style="font-size:.82rem;font-weight:500;">${r.name}</td>
+      <td><span class="cr-badge" style="font-size:.68rem;">CR ${r.cr}</span></td>
+      <td><input type="number" min="1" max="99" value="${r.count}" style="width:55px"
+          onchange="updateRosterField('${r.id}','count',this.value)"></td>
+      <td><input type="number" min="0" max="9999" value="${r.hp}" style="width:60px"
+          onchange="updateRosterField('${r.id}','hp',this.value)"></td>
+      <td><input type="number" min="0" max="999999" value="${r.xp}" style="width:65px"
+          onchange="updateRosterField('${r.id}','xp',this.value)"></td>
+      <td class="total-xp-cell">${fmtXp(rowXp)}</td>
+      <td><button class="remove-btn" onclick="removeFromRoster('${r.id}')"><i class="fas fa-times"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateRosterField(id, field, val){
+  const entry=roster.find(r=>r.id===id);
+  if(!entry) return;
+  entry[field]=field==='count'?Math.max(1,parseInt(val)||1):(parseInt(val)||0);
+  markDirty();
+  renderRoster();
+  calcDifficulty();
+}
+
+// =====================================================================
+//  XP CALCULATOR
+// =====================================================================
+function calcDifficulty(){
+  const rawXp=roster.reduce((s,r)=>s+(r.count*(r.xp||0)),0);
+  const totalCount=roster.reduce((s,r)=>s+r.count,0);
+  const mult=xpMultiplier(totalCount);
+  const adjXp=Math.round(rawXp*mult);
+
+  const level=parseInt(document.getElementById('party-level').value)||1;
+  const partySize=parseInt(document.getElementById('party-size').value)||4;
+  const thresh=XP_THRESHOLDS[level]||XP_THRESHOLDS[1];
+  const [easy,med,hard,deadly]=thresh.map(t=>t*partySize);
+
+  document.getElementById('raw-xp').textContent=fmtXp(rawXp);
+  document.getElementById('enc-multiplier').textContent=`×${mult}`;
+  document.getElementById('adj-xp').textContent=fmtXp(adjXp);
+  document.getElementById('monster-count-val').textContent=totalCount;
+  document.getElementById('t-easy').textContent=fmtXp(easy);
+  document.getElementById('t-medium').textContent=fmtXp(med);
+  document.getElementById('t-hard').textContent=fmtXp(hard);
+  document.getElementById('t-deadly').textContent=fmtXp(deadly);
+
+  let diff,cls;
+  if(totalCount===0||rawXp===0){diff='—';cls='trivial';}
+  else if(adjXp<easy){diff='TRIVIAL';cls='trivial';}
+  else if(adjXp<med){diff='EASY';cls='easy';}
+  else if(adjXp<hard){diff='MEDIUM';cls='medium';}
+  else if(adjXp<deadly){diff='HARD';cls='hard';}
+  else{diff='DEADLY';cls='deadly';}
+
+  const badge=document.getElementById('diff-badge');
+  badge.className=`diff-badge diff-${cls}`;
+  badge.innerHTML=`<div class="diff-label">${diff}</div><div class="diff-xp">Adj. ${fmtXp(adjXp)} XP</div>`;
+
+  return {diff,adjXp,rawXp,easy,med,hard,deadly};
+}
+
+// =====================================================================
+//  CAMPAIGNS & QUESTS from NexusCore
+// =====================================================================
+function loadCampaigns(){
+  const sel=document.getElementById('enc-campaign');
+  const campaigns=ncLoad(NC_KEYS.campaigns);
+  sel.innerHTML='<option value="">— None —</option>';
+  campaigns.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c.id||c.name||'';
+    o.textContent=c.name||c.title||'Unnamed Campaign';
+    sel.appendChild(o);
+  });
+}
+
+function onCampaignChange(){
+  markDirty();
+  loadQuestsForCampaign(document.getElementById('enc-campaign').value);
+}
+
+function loadQuestsForCampaign(campaignId){
+  const sel=document.getElementById('enc-quest');
+  const quests=ncLoad(NC_KEYS.quests);
+  sel.innerHTML='<option value="">— None —</option>';
+  const filtered=campaignId
+    ? quests.filter(q=>q.campaignId===campaignId||q.campaign===campaignId)
+    : quests;
+  filtered.forEach(q=>{
+    const o=document.createElement('option');
+    o.value=q.id||q.title||'';
+    o.textContent=q.title||q.name||'Unnamed Quest';
+    sel.appendChild(o);
+  });
+}
+
+// =====================================================================
+//  SAVE
+// =====================================================================
+function saveEncounter(){
+  const name=(document.getElementById('enc-name').value||'').trim();
+  if(!name){toast('Give this encounter a name first.','warn');return;}
+  if(!roster.length){toast('Add at least one monster before saving.','warn');return;}
+
+  const {diff,adjXp,rawXp}=calcDifficulty();
+
+  const enc={
+    id: editingId||uid(),
+    name,
+    environment: document.getElementById('enc-env').value||'',
+    campaignId:  document.getElementById('enc-campaign').value||'',
+    questId:     document.getElementById('enc-quest').value||'',
+    monsters:    roster.map(r=>({name:r.name,cr:r.cr,count:r.count,hp:r.hp,xp:r.xp})),
+    notes:       document.getElementById('enc-notes').value||'',
+    difficulty:  diff,
+    totalXp:     adjXp,
+    rawXp,
+    createdAt:   new Date().toISOString(),
+    source:      'EncounterBuilder'
+  };
+
+  const encounters=ncLoad(NC_KEYS.encounters);
+  if(editingId){
+    const idx=encounters.findIndex(e=>e.id===editingId);
+    if(idx>=0) encounters[idx]=enc; else encounters.unshift(enc);
+  } else {
+    encounters.unshift(enc);
+  }
+  ncSave(NC_KEYS.encounters, encounters);
+  ncLogActivity('💀',`Built encounter: ${name}`);
+
+  editingId=enc.id;
+  isDirty=false;
+  toast(`<strong>${name}</strong> saved to NexusCore!`,'success');
+  renderRecent();
+}
+
+// =====================================================================
+//  NEW / CLEAR / RANDOM
+// =====================================================================
+function newEncounter(){
+  if(isDirty&&!confirm('Unsaved changes will be lost. Start a new encounter?')) return;
+  editingId=null;
+  isDirty=false;
+  roster=[];
+  document.getElementById('enc-name').value='';
+  document.getElementById('enc-env').value='';
+  document.getElementById('enc-campaign').value='';
+  document.getElementById('enc-quest').value='';
+  document.getElementById('enc-notes').value='';
+  renderRoster();
+  calcDifficulty();
+  toast('New encounter started.','info');
+}
+
+function randomEncounter(){
+  const env=document.getElementById('enc-env').value||'Forest';
+  const pool=ENV_MONSTERS[env]||ENV_MONSTERS.Forest;
+  const shuffled=[...pool].sort(()=>Math.random()-.5);
+  const count=2+Math.floor(Math.random()*4); // 2-5
+  const picked=shuffled.slice(0,count);
+
+  roster=[];
+  picked.forEach(mName=>{
+    const m=MONSTERS.find(x=>x.name===mName);
+    if(m){
+      const cnt=1+Math.floor(Math.random()*3);
+      roster.push({id:uid(),name:m.name,cr:m.cr,count:cnt,hp:m.hp,xp:m.xp});
+    }
+  });
+
+  if(!document.getElementById('enc-name').value){
+    document.getElementById('enc-name').value=`${env} Encounter`;
+  }
+
+  markDirty();
+  renderRoster();
+  calcDifficulty();
+  toast(`Random ${env} encounter generated!`,'info');
+}
+
+// =====================================================================
+//  RECENT ENCOUNTERS
+// =====================================================================
+function renderRecent(){
+  const enc=ncLoad(NC_KEYS.encounters)
+    .filter(e=>e.source==='EncounterBuilder')
+    .slice(0,5);
+  const grid=document.getElementById('recent-grid');
+  const empty=document.getElementById('recent-empty');
+  if(!enc.length){
+    grid.innerHTML='';
+    empty.style.display='';
+    return;
+  }
+  empty.style.display='none';
+  const diffColors={
+    TRIVIAL:'#555',EASY:'var(--easy)',MEDIUM:'var(--medium)',
+    HARD:'var(--hard)',DEADLY:'var(--deadly)','—':'#555'
+  };
+  grid.innerHTML=enc.map(e=>{
+    const dc=diffColors[e.difficulty]||'#555';
+    const mNames=(e.monsters||[]).map(m=>`${m.count}× ${m.name}`).slice(0,3).join(', ');
+    const more=(e.monsters||[]).length>3?` +${e.monsters.length-3} more`:'';
+    const dt=e.createdAt?new Date(e.createdAt).toLocaleDateString():'';
+    return `<div class="recent-card" onclick="loadEncounter('${e.id}')">
+      <div class="rc-name">${e.name}</div>
+      <div class="rc-meta">
+        ${e.environment?`<span><i class="fas fa-map-marker-alt" style="font-size:.65rem"></i> ${e.environment}</span>`:''}
+        ${dt?`<span>${dt}</span>`:''}
+        <span>${fmtXp(e.totalXp||0)} XP</span>
+      </div>
+      <div style="font-size:.72rem;color:var(--text2);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${mNames}${more}</div>
+      <span class="rc-diff" style="color:${dc};background:${dc}22;border:1px solid ${dc}44">${e.difficulty||'—'}</span>
+    </div>`;
+  }).join('');
+}
+
+function loadEncounter(id){
+  if(isDirty&&!confirm('Load this encounter? Unsaved changes will be lost.')) return;
+  const encounters=ncLoad(NC_KEYS.encounters);
+  const enc=encounters.find(e=>e.id===id);
+  if(!enc){toast('Encounter not found.','error');return;}
+
+  editingId=enc.id;
+  isDirty=false;
+  document.getElementById('enc-name').value=enc.name||'';
+  document.getElementById('enc-env').value=enc.environment||'';
+  document.getElementById('enc-notes').value=enc.notes||'';
+  loadCampaigns();
+  if(enc.campaignId){
+    document.getElementById('enc-campaign').value=enc.campaignId;
+    loadQuestsForCampaign(enc.campaignId);
+  }
+  if(enc.questId) document.getElementById('enc-quest').value=enc.questId;
+
+  roster=(enc.monsters||[]).map(m=>({id:uid(),name:m.name,cr:m.cr,count:m.count||1,hp:m.hp||0,xp:m.xp||0}));
+  renderRoster();
+  calcDifficulty();
+  toast(`Loaded <strong>${enc.name}</strong>`,'info');
+}
+
+// =====================================================================
+//  COLLAPSIBLE
+// =====================================================================
+function toggleRecent(){
+  const card=document.getElementById('recent-card');
+  const body=document.getElementById('recent-body');
+  const icon=card.querySelector('.toggle-icon');
+  if(body.classList.contains('closed')){
+    body.classList.remove('closed');
+    card.classList.remove('collapsed');
+  } else {
+    body.classList.add('closed');
+    card.classList.add('collapsed');
+  }
+}
+
+// =====================================================================
+//  DIRTY TRACKING
+// =====================================================================
+function markDirty(){isDirty=true;}
+
+window.addEventListener('beforeunload',e=>{
+  if(isDirty){e.preventDefault();e.returnValue='';}
+});
+
+// =====================================================================
+//  INIT
+// =====================================================================
+function init(){
+  filterMonsters();
+  loadCampaigns();
+  loadQuestsForCampaign('');
+  renderRoster();
+  calcDifficulty();
+  renderRecent();
+}
+
+init();
+</script>
+</body>
+</html>
