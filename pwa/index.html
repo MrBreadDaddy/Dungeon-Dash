@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RealmWatch</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0704;color:#e8dcc8;font-family:Georgia,serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+  h1{font-size:1.6rem;color:#f5c842;letter-spacing:2px;margin-bottom:6px;text-align:center}
+  p{font-size:0.8rem;color:#7a5c35;margin-bottom:32px;text-align:center}
+  .grid{display:grid;grid-template-columns:1fr;gap:16px;width:100%;max-width:380px}
+  .card{display:flex;align-items:center;gap:16px;background:#1a1208;border:1px solid #3d2a10;border-radius:14px;padding:16px;text-decoration:none;color:inherit;transition:border-color .2s}
+  .card:active{border-color:#f5c842}
+  .icon{width:52px;height:52px;border-radius:14px;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:bold;flex-shrink:0}
+  .label{font-size:1rem;font-weight:bold;color:#e8dcc8}
+  .desc{font-size:0.72rem;color:#7a5c35;margin-top:3px}
+</style>
+</head>
+<body>
+  <h1>RealmWatch</h1>
+  <p>Choose your portal</p>
+  <div class="grid">
+        <a href="dungeon-dash/index.html" class="card">
+            <div class="icon" style="background:#1a0a00;border-color:#f5c84233;">
+                <span style="color:#f5c842;">D</span>
+            </div>
+            <div class="label">Dungeon Dash</div>
+            <div class="desc">Player portal for Dungeon Dash D&D campaigns</div>
+        </a>
+        <a href="dm-toolkit/index.html" class="card">
+            <div class="icon" style="background:#1a0000;border-color:#e74c3c33;">
+                <span style="color:#e74c3c;">D</span>
+            </div>
+            <div class="label">DM Toolkit</div>
+            <div class="desc">Dungeon Master tools for RealmWatch campaigns</div>
+        </a>
+        <a href="nexuscore/index.html" class="card">
+            <div class="icon" style="background:#1a0a2e;border-color:#8b5cf633;">
+                <span style="color:#8b5cf6;">N</span>
+            </div>
+            <div class="label">NexusCore</div>
+            <div class="desc">Master campaign command center for RealmWatch</div>
+        </a>
+  </div>
+</body>
+</html>
